@@ -60,7 +60,7 @@ public class StartScreenController {
 
         JFrame frame = new JFrame("Hotel Simulator");
         frame.setLayout(new BorderLayout());
-        frame.add(new JScrollPane(panel), BorderLayout.CENTER);
+        frame.add(panel, BorderLayout.CENTER);
         frame.add(panel.createBottomPanel(), BorderLayout.SOUTH);
         frame.setSize(1000, 800);
         frame.setLocationRelativeTo(null);

@@ -1,10 +1,10 @@
 package controller;
 
 import view.LogPanel;
+import view.TimeControlPanel;
 
 import javax.swing.*;
 import java.awt.*;
-import java.security.Provider;
 import java.util.List;
 
 import model.*;
@@ -16,17 +16,17 @@ public class SimulationPanel extends JPanel {
     private final SimulationRenderer renderer;
     private final SimulationController controller;
     private final LogPanel logPanel;
-
-    private JLabel statusLabel;
+    private final HotelTimeEngine hte;
+    private TimeControlPanel timeControlPanel;
 
     public SimulationPanel(
             List<Area> areas,
             int capacity,
-            int cleaningSeconds // ADD THIS
+            int cleaningSeconds
     ) {
 
         // Simulatie data
-        this.data = new SimulationData(areas, capacity, cleaningSeconds); // ADD cleaningSeconds
+        this.data = new SimulationData(areas, capacity, cleaningSeconds);
 
         // Renderer
         this.renderer = new SimulationRenderer(data);
@@ -36,6 +36,9 @@ public class SimulationPanel extends JPanel {
 
         // Controller
         this.controller = new SimulationController(data, logPanel);
+
+        // HTE
+        this.hte = new HotelTimeEngine();
 
         // Layout
         setLayout(new BorderLayout());
@@ -71,35 +74,17 @@ public class SimulationPanel extends JPanel {
 
         add(splitPane, BorderLayout.CENTER);
 
-        new Timer(16, e -> {
-
-            controller.updateTick();
-
-            if (statusLabel != null) {
-                long activeGuests =
-                        data.guests.values()
-                                .stream()
-                                .filter(g -> !g.isCheckingOut)
-                                .count();
-
-                statusLabel.setText("Hotel Status: Actief | Gasten: " + activeGuests);
-            }
-
+        // Game loop
+        GameLoop gameLoop = new GameLoop(controller, hte, () -> {
+            if (timeControlPanel != null) timeControlPanel.refresh();
             repaint();
-
-        }).start();
+        });
+        gameLoop.start();
     }
 
     public JPanel createBottomPanel() {
 
-        JPanel bottom = new JPanel();
-        bottom.setLayout(new FlowLayout(FlowLayout.LEFT));
-
-        if (statusLabel == null) {
-            statusLabel = new JLabel("Hotel Status: Initialiseren...");
-        }
-
-        bottom.add(statusLabel);
-        return bottom;
+        timeControlPanel = new TimeControlPanel(hte, data);
+        return timeControlPanel;
     }
 }

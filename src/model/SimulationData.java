@@ -1,6 +1,5 @@
 package model;
 
-import java.security.Provider;
 import java.util.*;
 
 public class SimulationData {
