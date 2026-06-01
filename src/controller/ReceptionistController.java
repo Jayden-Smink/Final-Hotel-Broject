@@ -13,7 +13,8 @@ public class ReceptionistController {
     public ReceptionistController(SimulationData data, LogPanel logPanel) {
         this.data = data;
         this.logPanel = logPanel;
-        this.receptionist = new Receptionist(data);
+        this.receptionist = new Receptionist(data, new RoomController());
+
     }
 
     public void handleCheckIn(int guestId, int preferredRoomId) {

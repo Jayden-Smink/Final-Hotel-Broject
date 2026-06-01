@@ -9,12 +9,14 @@ public class GuestActivityController {
     private final SimulationData data;
     private final ReceptionistController receptionistController;
     private final LogPanel logPanel;
+    private final IRoomAssigner roomController;
     private final Random random = new Random();
 
     public GuestActivityController(SimulationData data, ReceptionistController receptionistController, LogPanel logPanel) {
         this.data = data;
         this.receptionistController = receptionistController;
         this.logPanel = logPanel;
+        this.roomController = new RoomController();
     }
 
     public void updateActivities() {
@@ -32,7 +34,7 @@ public class GuestActivityController {
             if (g.isCheckingOut && g.state == GuestState.AT_DESTINATION
                     && Math.abs(g.x - 20.0) < 15) {
 
-                RoomController.maakGastVrij(data, g.id);
+                roomController.maakGastVrij(data, g.id);
                 data.guests.remove(g.id);
 
                 if (logPanel != null) {

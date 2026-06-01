@@ -1,14 +1,15 @@
 package controller;
 
 import model.Area;
+import model.IRoomAssigner;
 import model.SimulationData;
 
 import java.util.*;
 
-public class RoomController {
+public class RoomController implements IRoomAssigner {
 
     // Probeert eerst voorkeurskamer, anders random vrije kamer
-    public static Optional<Area> reserveerVrijeKamer(SimulationData data, int voorkeurId, int gastId) {
+    public Optional<Area> reserveerVrijeKamer(SimulationData data, int voorkeurId, int gastId) {
 
         // 1. Check voorkeurskamer
         Optional<Area> voorkeur = data.areas.stream()
@@ -40,14 +41,14 @@ public class RoomController {
     }
 
     // Gast uit alle kamers/faciliteiten verwijderen
-    public static void maakGastVrij(SimulationData data, int gastId) {
+    public  void maakGastVrij(SimulationData data, int gastId) {
         for (Area a : data.areas) {
             a.currentOccupants.remove(Integer.valueOf(gastId));
         }
     }
 
     // Vrije faciliteit zoeken (restaurant, cinema, etc.)
-    public static Optional<Area> vindVrijeActiviteit(SimulationData data, String type, int gastId) {
+    public  Optional<Area> vindVrijeActiviteit(SimulationData data, String type, int gastId) {
         maakGastVrij(data, gastId);
 
         return data.areas.stream()

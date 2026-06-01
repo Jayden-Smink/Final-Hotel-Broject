@@ -1,20 +1,21 @@
 package model;
 
-import controller.RoomController;
 import java.util.Optional;
 
 public class Receptionist {
-    private SimulationData data;
+    private final SimulationData data; // ADD THIS
+    private final IRoomAssigner roomAssigner;
 
-    public Receptionist(SimulationData data) {
+    public Receptionist(SimulationData data, IRoomAssigner roomAssigner) {
         this.data = data;
+        this.roomAssigner = roomAssigner;
     }
 
     public Optional<Area> wijsKamerToe(int voorkeurId, int gastId) {
-        return RoomController.reserveerVrijeKamer(data, voorkeurId, gastId);
+        return roomAssigner.reserveerVrijeKamer(data, voorkeurId, gastId);
     }
 
     public void checkOut(int gastId) {
-        RoomController.maakGastVrij(data, gastId);
+        roomAssigner.maakGastVrij(data, gastId);
     }
 }

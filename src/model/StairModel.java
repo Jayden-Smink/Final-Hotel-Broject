@@ -13,17 +13,9 @@ public class StairModel {
                 .orElse(null);
     }
 
-    public boolean isAvailable() {
-        return stairArea != null;
-    }
-
     public double getStairX(int horizontalOffset, int tileSize) {
         if (stairArea == null) return -1;
         return (stairArea.getPos()[0] * tileSize) + horizontalOffset;
-    }
-
-    public double getStairY(int floor, int tileSize) {
-        return floor * tileSize;
     }
 
     public double calculateTravelTime(double guestX, int currentFloor, int targetFloor, int tileSize, int horizontalOffset) {
