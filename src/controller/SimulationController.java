@@ -5,9 +5,6 @@ import hotelevents.HotelEventListener;
 import hotelevents.HotelEventManager;
 import model.*;
 import view.LogPanel;
-import controller.CleanerController;
-import factory.PersonFactory;
-import model.PersonType;
 
 /**
  * De centrale controller van de simulatie. Deze klasse luistert naar hotel-events
@@ -28,7 +25,7 @@ public class SimulationController implements HotelEventListener {
     private final HotelEventManager eventManager; // De externe event-generator (uit de JAR)
     private final CleanerController cleanerController;
 
-    public SimulationController(SimulationData data, LogPanel logPanel) {
+    public SimulationController(SimulationData data, LogPanel logPanel, int selectedScenario) {
 
         this.data = data;
         this.logPanel = logPanel;
@@ -44,8 +41,8 @@ public class SimulationController implements HotelEventListener {
         this.eventManager = new HotelEventManager();
         eventManager.register(this);
 
-        // Start het scenario (in dit geval scenario 3)
-        eventManager.start(3);
+        // Start het gekozen scenario
+        eventManager.start(selectedScenario);
     }
 
     /**
@@ -58,16 +55,17 @@ public class SimulationController implements HotelEventListener {
         switch (event.getEventType()) {
 
             case CHECK_IN:
+                // Maak een nieuw, leeg gast-object aan op positie (0,0)
+                Guest guest = new Guest(
+                        event.getGuestId(),
+                        0,
+                        0
+                );
 
-                // OUDE CODE:
-                // Guest guest = new Guest(event.getGuestId(), 0, 0);
-
-                // NIEUWE DYNAMISCHE CODE VIA DE FACTORY:
-                Guest guest = PersonFactory.createGuest(PersonType.GUEST, event.getGuestId(), 0, 0);
-
-                // Vanaf hier blijft de logica precies hetzelfde
+                // Laat de GuestController de gast fysiek in de lobby spawnen en naar de receptie sturen
                 guestController.spawnGuest(guest);
 
+                // Laat de receptionist administratief een kamer zoeken en toewijzen
                 receptionistController.handleCheckIn(
                         event.getGuestId(),
                         event.getData()
@@ -90,7 +88,7 @@ public class SimulationController implements HotelEventListener {
                             .filter(a -> a.AreaType.equalsIgnoreCase("LOBBY"))
                             .findFirst()
                             .ifPresent(lobby -> {
-                                double exitY = (lobby.getPos()[1] * data.tileSize) + data.tileSize/2.0;
+                                double exitY = (lobby.getPos()[1] * data.tileSize) + data.tileSize / 2.0;
                                 leavingGuest.setTarget(20.0, exitY); // Stuur de gast naar de hoteluitgang (X=20)
                             });
 
@@ -122,7 +120,10 @@ public class SimulationController implements HotelEventListener {
             case CLEANING_EMERGENCY:
                 // Delegeer het noodgeval direct naar de CleanerController
                 cleanerController.handleCleaningEmergency(event.getData());
-                if (logPanel != null) logPanel.addLog("🧹 Cleaning emergency!");
+
+                if (logPanel != null) {
+                    logPanel.addLog("🧹 Cleaning emergency!");
+                }
                 break;
 
             case EVACUATE:

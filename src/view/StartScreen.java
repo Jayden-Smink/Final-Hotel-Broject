@@ -10,7 +10,9 @@ public class StartScreen extends JFrame {
     private final DefaultListModel<String> listModel = new DefaultListModel<>();
     private final JSpinner capSpinner = new JSpinner(new SpinnerNumberModel(50, 1, 500, 5));
     private final StartScreenController controller = new StartScreenController(listModel);
+
     private int cleaningSeconds = 10;
+    private int selectedScenario = 1;
 
     public StartScreen() {
         setUndecorated(true);
@@ -39,17 +41,20 @@ public class StartScreen extends JFrame {
         JButton quitBtn = UIFactory.createStyledButton("Quit", false);
 
         settingsBtn.addActionListener(e -> {
-            SettingsDialog dialog = new SettingsDialog(this, cleaningSeconds);
+            SettingsDialog dialog = new SettingsDialog(this, cleaningSeconds, selectedScenario);
             dialog.setVisible(true);
+
             if (dialog.isConfirmed()) {
                 cleaningSeconds = dialog.getCleaningSeconds();
+                selectedScenario = dialog.getSelectedScenario();
             }
         });
 
         startBtn.addActionListener(e -> controller.handleStart(
                 this,
                 (int) capSpinner.getValue(),
-                cleaningSeconds
+                cleaningSeconds,
+                selectedScenario
         ));
 
         quitBtn.addActionListener(e -> System.exit(0));
