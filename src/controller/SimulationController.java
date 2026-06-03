@@ -5,6 +5,7 @@ import hotelevents.HotelEventListener;
 import hotelevents.HotelEventManager;
 import model.*;
 import view.LogPanel;
+import controller.CleanerController;
 
 /**
  * De centrale controller van de simulatie. Deze klasse luistert naar hotel-events
@@ -25,15 +26,19 @@ public class SimulationController implements HotelEventListener {
     private final HotelEventManager eventManager; // De externe event-generator (uit de JAR)
     private final CleanerController cleanerController;
 
-    public SimulationController(SimulationData data, LogPanel logPanel, int selectedScenario) {
+    public SimulationController(SimulationData data, LogPanel logPanel) {
 
         this.data = data;
         this.logPanel = logPanel;
 
-        // Initialiseer alle sub-controllers en geef de benodigde data/panels mee
+        // 1. Initialiseer eerst de controllers die geen afhankelijkheden hebben
         this.elevatorController = new ElevatorController(data);
         this.receptionistController = new ReceptionistController(data, logPanel);
-        this.guestController = new GuestController(data, logPanel);
+
+        // 2. Initialiseer de GuestController en geef de receptionistController mee (Aanpassing docent)
+        this.guestController = new GuestController(data, logPanel, this.receptionistController);
+
+        // 3. Initialiseer de overige controllers
         this.guestActivityController = new GuestActivityController(data, receptionistController, logPanel);
         this.cleanerController = new CleanerController(data, logPanel);
 
@@ -41,8 +46,8 @@ public class SimulationController implements HotelEventListener {
         this.eventManager = new HotelEventManager();
         eventManager.register(this);
 
-        // Start het gekozen scenario
-        eventManager.start(selectedScenario);
+        // Start het scenario (in dit geval scenario 3)
+        eventManager.start(2);
     }
 
     /**
@@ -55,25 +60,11 @@ public class SimulationController implements HotelEventListener {
         switch (event.getEventType()) {
 
             case CHECK_IN:
-                // Maak een nieuw, leeg gast-object aan op positie (0,0)
-                Guest guest = new Guest(
+                // We delegeeren de taak nu direct en slank naar de GuestController (Architectuur aanpassing docent)
+                guestController.processCheckIn(
                         event.getGuestId(),
-                        0,
-                        0
+                        event.getData() // Dit is het preferredRoomId
                 );
-
-                // Laat de GuestController de gast fysiek in de lobby spawnen en naar de receptie sturen
-                guestController.spawnGuest(guest);
-
-                // Laat de receptionist administratief een kamer zoeken en toewijzen
-                receptionistController.handleCheckIn(
-                        event.getGuestId(),
-                        event.getData()
-                );
-
-                if (logPanel != null) {
-                    logPanel.addLog("👤 Gast " + guest.id + " is ingecheckt.");
-                }
                 break;
 
             case CHECK_OUT:
@@ -88,7 +79,7 @@ public class SimulationController implements HotelEventListener {
                             .filter(a -> a.AreaType.equalsIgnoreCase("LOBBY"))
                             .findFirst()
                             .ifPresent(lobby -> {
-                                double exitY = (lobby.getPos()[1] * data.tileSize) + data.tileSize / 2.0;
+                                double exitY = (lobby.getPos()[1] * data.tileSize) + data.tileSize/2.0;
                                 leavingGuest.setTarget(20.0, exitY); // Stuur de gast naar de hoteluitgang (X=20)
                             });
 
@@ -120,10 +111,7 @@ public class SimulationController implements HotelEventListener {
             case CLEANING_EMERGENCY:
                 // Delegeer het noodgeval direct naar de CleanerController
                 cleanerController.handleCleaningEmergency(event.getData());
-
-                if (logPanel != null) {
-                    logPanel.addLog("🧹 Cleaning emergency!");
-                }
+                if (logPanel != null) logPanel.addLog("🧹 Cleaning emergency!");
                 break;
 
             case EVACUATE:

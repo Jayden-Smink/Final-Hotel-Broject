@@ -1,24 +1,29 @@
 package controller;
 
+import factory.PersonFactory;
 import model.*;
 import view.LogPanel;
 
 /**
- * Beheert de basishandelingen van alle gasten, zoals het invoeren van nieuwe gasten
- * in de simulatie (spawnen) en het aansturen van hun frame-by-frame bewegingen.
+ * Beheert de basishandelingen van alle gasten, zoals het aanmaken via de factory,
+ * het invoeren van nieuwe gasten in de simulatie (spawnen) en het aansturen van hun frame-by-frame bewegingen.
  */
 public class GuestController {
 
     private final SimulationData data;
     private final LogPanel logPanel;
     private final GuestMover guestMover;
+    private final ReceptionistController receptionistController; // Toegevoegd om de incheckregie te voeren
 
+    // Constructor aangepast om ook de ReceptionistController te ontvangen
     public GuestController(
             SimulationData data,
-            LogPanel logPanel
+            LogPanel logPanel,
+            ReceptionistController receptionistController
     ) {
         this.data = data;
         this.logPanel = logPanel;
+        this.receptionistController = receptionistController;
 
         // Maak de bewegingsmotor aan en geef hem direct de trappendata mee
         this.guestMover =
@@ -26,6 +31,27 @@ public class GuestController {
                         data,
                         new StairModel(data.areas)
                 );
+    }
+
+    /**
+     * BEHEERT DE INCHECK-LOGICA (Architectuur aanpassing docent)
+     * Deze methode vangt de kale data op uit de SimulationController,
+     * maakt zelf de gast aan via de factory en delegeert de administratie.
+     */
+    public void processCheckIn(int guestId, int preferredRoomId) {
+        // 1. Maak de gast dynamisch aan via de PersonFactory
+        Guest guest = PersonFactory.createGuest(PersonType.GUEST, guestId, 0, 0);
+
+        // 2. Zet de gast fysiek op zijn startpositie in het hotel
+        this.spawnGuest(guest);
+
+        // 3. Stuur de receptionist aan om de administratieve kamerreservering te verwerken
+        receptionistController.handleCheckIn(guestId, preferredRoomId);
+
+        // 4. Schrijf de melding naar het logpaneel
+        if (logPanel != null) {
+            logPanel.addLog("👤 Gast " + guest.id + " is ingecheckt.");
+        }
     }
 
     /**
@@ -47,8 +73,8 @@ public class GuestController {
     }
 
     /**
-     * Voegt een gloednieuwe gast toe aan het hotel aan de linkerkant van de lobby.
-     * Wordt getriggerd wanneer de SimulationController een CHECK_IN event ontvangt.
+     * Voegt een gast fysiek toe aan het hotel aan de linkerkant van de lobby.
+     * Berekent direct het loopdoel naar de receptie.
      */
     public void spawnGuest(Guest guest) {
 
@@ -87,14 +113,6 @@ public class GuestController {
 
                     // 3. Registreer de gast officieel in de centrale simulatiedatabase
                     data.guests.put(guest.id, guest);
-
-                    if (logPanel != null) {
-                        logPanel.addLog(
-                                "🧍 Gast "
-                                        + guest.id
-                                        + " komt het hotel binnen."
-                        );
-                    }
                 });
     }
 }

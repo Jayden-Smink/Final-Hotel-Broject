@@ -64,7 +64,6 @@ public class ElevatorController {
         if (!elevator.passengers.isEmpty()) {
             int currentFloor = (int) (elevator.curY / data.tileSize);
 
-            // Zoek de laagste doelverdieping onder de huidige passagiers (werkt als een simpele FIFO/omhoog-eerst logica)
             elevator.targetFloor = elevator.passengers.stream()
                     .mapToInt(g -> (int) (g.targetY / data.tileSize))
                     .min()
