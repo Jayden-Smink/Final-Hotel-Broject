@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class ElevatorTest {
+class ElevatorTests {
 
     private static final int TILE = 60;
     private Elevator elevator;

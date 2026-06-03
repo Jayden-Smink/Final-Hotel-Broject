@@ -11,7 +11,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class RoomControllerTest {
+class RoomControllerTests {
 
     private RoomController controller;
     private SimulationData data;

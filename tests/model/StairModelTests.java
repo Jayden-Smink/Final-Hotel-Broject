@@ -7,7 +7,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class StairModelTest {
+class StairModelTests {
 
     private static final int TILE = 60;
     private static final int H_OFFSET = 60;

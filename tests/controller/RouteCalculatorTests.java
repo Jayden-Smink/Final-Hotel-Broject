@@ -9,7 +9,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class RouteCalculatorTest {
+class RouteCalculatorTests {
 
     private static final int TILE = 60;
 
