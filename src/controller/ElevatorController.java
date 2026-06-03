@@ -1,82 +1,94 @@
 package controller;
 
 import model.*;
-import java.util.*;
+import view.LogPanel;
 
-/**
- * Beheert de logica van de lift: het in- en uitstappen van gasten
- * en het bepalen van de volgende verdieping.
- */
 public class ElevatorController {
     private final SimulationData data;
+    private final LogPanel logPanel;
 
-    public ElevatorController(SimulationData data) {
+    public ElevatorController(SimulationData data, LogPanel logPanel) {
         this.data = data;
+        this.logPanel = logPanel;
     }
 
-    /**
-     * De hoofd-update loop van de lift. Wordt elke frame aangeroepen.
-     */
     public void update() {
         Elevator elevator = data.elevator;
         if (elevator == null) return;
 
-        // Update de interne status van de lift (zoals de huidige Y-positie)
         elevator.update();
 
-        // Alleen acties uitvoeren als de lift stilstaat op een verdieping
+        // Update wachttimers en verwijder gasten die te lang wachten
+        updateWaitTimers(elevator);
+
         if (!elevator.isMoving) {
-            // Bereken op welke verdieping de lift nu staat op basis van de pixels (Y-as)
             int currentFloorY = (int) (elevator.curY / data.tileSize);
 
-            // 1. Laat gasten uitstappen: controleer of hun doelverdieping overeenkomt met de huidige verdieping
-            elevator.passengers.removeIf(g -> {
+            // Laat passagiers uitstappen op de juiste verdieping
+            for (int i = elevator.passengers.size() - 1; i >= 0; i--) {
+                Guest g = elevator.passengers.get(i);
                 int targetFloorY = (int) (g.targetY / data.tileSize);
                 if (targetFloorY == currentFloorY) {
+                    elevator.passengers.remove(i);
                     g.state = GuestState.EXITING_LIFT;
-                    g.x = elevator.curX + data.tileSize; // Zet de gast net buiten de lift op de gang
-                    return true; // Verwijder de gast uit de lift-lijst
+                    g.x = elevator.curX + data.tileSize;
                 }
-                return false;
-            });
+            }
 
-            // 2. Laat wachtende gasten instappen vanaf de wachtrij van de huidige verdieping
-            Queue<Guest> queue = data.floorQueues.get(currentFloorY);
-            // Blijf gasten toevoegen zolang de rij niet leeg is en de lift zijn maximale capaciteit nog niet heeft bereikt
-            while (queue != null && !queue.isEmpty() && elevator.passengers.size() < elevator.maxCapacity) {
-                Guest g = queue.poll(); // Haal de voorste gast uit de wachtrij
-                if (g != null) {
+            // Laat wachtende gasten op de huidige verdieping instappen
+            for (int i = elevator.waitingGuests.size() - 1; i >= 0; i--) {
+                if (elevator.passengers.size() >= elevator.maxCapacity) break;
+                Guest g = elevator.waitingGuests.get(i);
+                int guestFloorY = (int) ((g.y + 10) / data.tileSize);
+                if (guestFloorY == currentFloorY) {
+                    elevator.waitingGuests.remove(i);
+                    g.elevatorWaitTimer = 0;
                     g.state = GuestState.IN_LIFT;
                     elevator.passengers.add(g);
                 }
             }
 
-            // Bepaal na het in- en uitstappen waar de lift nu naartoe moet
             determineElevatorTarget(elevator);
         }
     }
 
-    /**
-     * Bepaalt de volgende doelverdieping van de lift op basis van passagiers of wachtrijen.
-     */
+    // Hoog de wachttimer op van elke wachtende gast. Geeft op na ELEVATOR_WAIT_TIMEOUT frames.
+    private void updateWaitTimers(Elevator elevator) {
+        for (int i = elevator.waitingGuests.size() - 1; i >= 0; i--) {
+            Guest g = elevator.waitingGuests.get(i);
+            g.elevatorWaitTimer++;
+
+            if (g.elevatorWaitTimer >= data.guestSettings.getElevatorWaitTimeout()) {
+                elevator.waitingGuests.remove(i);
+                g.elevatorWaitTimer = 0;
+                g.forceStairs = true;
+                g.state = GuestState.WALKING;
+
+                if (logPanel != null) logPanel.addLog("😤 Gast " + g.id + " geeft op en neemt de trap.");
+            }
+        }
+    }
+
     private void determineElevatorTarget(Elevator elevator) {
-        // Prioriteit 1: Als er mensen in de lift zitten, breng hen eerst weg
+        int currentFloor = (int) (elevator.curY / data.tileSize);
+
+        // Prioriteit 1: breng passagiers naar hun verdieping
         if (!elevator.passengers.isEmpty()) {
-            int currentFloor = (int) (elevator.curY / data.tileSize);
-
-            elevator.targetFloor = elevator.passengers.stream()
-                    .mapToInt(g -> (int) (g.targetY / data.tileSize))
-                    .min()
-                    .orElse(currentFloor);
-
-        } else {
-            // Prioriteit 2: Als de lift leeg is, zoek de eerste verdieping waar mensen in de rij staan te wachten
-            for (Map.Entry<Integer, Queue<Guest>> entry : data.floorQueues.entrySet()) {
-                if (!entry.getValue().isEmpty()) {
-                    elevator.targetFloor = entry.getKey(); // Stuur lift naar de verdieping met wachtenden
-                    break; // Stop met zoeken zodra er één gevonden is
+            int target = currentFloor;
+            for (int i = 0; i < elevator.passengers.size(); i++) {
+                int floorY = (int) (elevator.passengers.get(i).targetY / data.tileSize);
+                if (i == 0 || floorY < target) {
+                    target = floorY;
                 }
             }
+            elevator.targetFloor = target;
+            return;
+        }
+
+        // Prioriteit 2: ga naar de verdieping waar iemand staat te wachten
+        if (!elevator.waitingGuests.isEmpty()) {
+            int floorY = (int) ((elevator.waitingGuests.get(0).y + 10) / data.tileSize);
+            elevator.targetFloor = floorY;
         }
     }
 }

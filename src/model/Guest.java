@@ -5,14 +5,15 @@ public class Guest extends Person {
     public int assignedRoomId = -1;
     public boolean isCheckingOut = false;
 
-    // --- NIEUW: Variabelen voor de dynamische routinecyclus ---
     public int activityTimer = 0;
     public boolean isInRoom = false;
-    public String currentActivity = "NONE"; // "NONE", "ROOM", "RESTAURANT", "CINEMA", "FITNESS"
+    public String currentActivity = "NONE";
+
+    public int elevatorWaitTimer = 0;  // hoe lang de gast al wacht op de lift
+    public boolean forceStairs = false; // geeft op en neemt de trap
 
     public Guest(int id, double x, double y) {
         super(id, x, y);
-
         this.state = GuestState.WALKING;
         this.currentActivity = "ROOM";
     }
