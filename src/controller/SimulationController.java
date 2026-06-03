@@ -51,7 +51,7 @@ public class SimulationController implements HotelEventListener {
     }
 
     /**
-     * OBSERVER PATTERN - Vangt binnenkomende gebeurtenissen op vanuit de HotelEventManager.
+     * OBSERVER PATTERN - Vangt binnenkomende gebeurtenissen op vanuit dedjalla HotelEventManager.
      */
     @Override
     public void notify(HotelEvent event) {
