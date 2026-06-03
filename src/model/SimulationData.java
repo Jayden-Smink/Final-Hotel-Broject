@@ -7,7 +7,7 @@ public class SimulationData {
     public Elevator elevator;
     public Map<Integer, Guest> guests = new HashMap<>();
     public Map<Integer, Queue<Guest>> floorQueues = new HashMap<>();
-    public int tileSize = 60;
+    public int tileSize = 60; //
     public int horizontalOffset = 60;
     public Cleaner cleaner;
     public CleanerSettings cleanerSettings;
