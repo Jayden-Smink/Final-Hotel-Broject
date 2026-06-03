@@ -4,6 +4,10 @@ import model.*;
 import view.LogPanel;
 import java.util.*;
 
+/**
+ * Beheert de levenscyclus, het gedrag en de AI-activiteiten van hotelgasten.
+ * Regelt het inchecken, uitchecken en de rotatie tussen kamers en faciliteiten.
+ */
 public class GuestActivityController {
 
     private final SimulationData data;
@@ -16,41 +20,48 @@ public class GuestActivityController {
         this.data = data;
         this.receptionistController = receptionistController;
         this.logPanel = logPanel;
-        this.roomController = new RoomController();
+        this.roomController = new RoomController(); // Verantwoordelijk voor kamerbeheer (vrijmaken/toewijzen)
     }
 
+    /**
+     * Hoofd-update loop voor de gastenactiviteiten. Wordt elke frame aangeroepen.
+     */
     public void updateActivities() {
-        processLocationLogic();
-        handleDynamicGuestActivities();
+        processLocationLogic();         // 1. Controleer OF en WAAR gasten zijn aangekomen
+        handleDynamicGuestActivities(); // 2. Beheer de timers voor nieuwe activiteiten van stilstaande gasten
     }
 
+    /**
+     * Controleert of een gast op een specifieke bestemming is aangekomen en switcht hun status.
+     */
     private void processLocationLogic() {
-
+        // Kopie van de lijst om ConcurrentModificationExceptions tijdens het verwijderen (checkout) te voorkomen
         List<Guest> guestList = new ArrayList<>(data.guests.values());
 
         for (Guest g : guestList) {
 
-            // Checkout check — runs regardless of other state
+            // Snel-check: Is de gast aan het uitchecken en staat hij bij de hoteluitgang (X-as rond de 20)?
             if (g.isCheckingOut && g.state == GuestState.AT_DESTINATION
                     && Math.abs(g.x - 20.0) < 15) {
 
-                roomController.maakGastVrij(data, g.id);
-                data.guests.remove(g.id);
+                roomController.maakGastVrij(data, g.id); // Geef de hotelkamer weer vrij
+                data.guests.remove(g.id);               // Verwijder de gast fysiek uit de simulatie
 
                 if (logPanel != null) {
                     logPanel.addLog("🚶 Gast " + g.id + " heeft het hotel verlaten.");
                 }
-
-                continue;
+                continue; // Ga direct door naar de volgende gast
             }
 
+            // Logica voor gasten die hun tussentijdse bestemming hebben bereikt
             if (g.state == GuestState.AT_DESTINATION) {
 
-                // Gast staat bij de receptie
+                // Situatie A: Gast staat bij de receptie (klaar om in te checken)
                 if (isAtArea(g, "RECEPTION") && !g.isCheckingOut) {
 
-                    receptionistController.sendToRoom(g);
+                    receptionistController.sendToRoom(g); // Vraag de receptionist om een kamer te geven
 
+                    // Als het hotel vol is (assignedRoomId blijft -1), stuur de gast direct naar de uitgang
                     if (g.assignedRoomId == -1) {
                         g.isCheckingOut = true;
                         sendGuestToExit(g);
@@ -64,124 +75,133 @@ public class GuestActivityController {
                     }
                 }
 
-                // Gast is bij zijn kamer aangekomen
+                // Situatie B: Gast is aangekomen bij zijn/haar toegewezen hotelkamer
                 else if (isAtAssignedRoom(g) && g.currentActivity.equals("WALKING_TO_ROOM")) {
-                    g.state = GuestState.IDLE;
+                    g.state = GuestState.IDLE; // Gast staat stil
                     g.isInRoom = true;
                     g.currentActivity = "ROOM";
-                    g.activityTimer = 0;
+                    g.activityTimer = 0;       // Reset de timer voor de volgende activiteit
                 }
 
-                // Gast is bij een faciliteit aangekomen
+                // Situatie C: Gast is aangekomen bij een faciliteit (Bioscoop, Restaurant, etc.)
                 else if (g.currentActivity.equals("WALKING_TO_FACILITY")) {
                     g.state = GuestState.IDLE;
                     g.isInRoom = false;
                     g.currentActivity = "USING_FACILITY";
-                    g.activityTimer = 0;
+                    g.activityTimer = 0;       // Reset de timer voor de duur van het faciliteitbezoek
                 }
             }
         }
     }
 
+    /**
+     * Regelt de timers van stilstaande (IDLE) gasten en stuurt ze na verloop van tijd ergens anders heen.
+     */
     private void handleDynamicGuestActivities() {
-
         for (Guest g : data.guests.values()) {
 
             if (g.state == GuestState.IDLE) {
 
-                // Checkout heeft altijd prioriteit
+                // Als een gast de status heeft om uit te checken, stuur hem direct naar de uitgang
                 if (g.isCheckingOut) {
                     sendGuestToExit(g);
                     continue;
                 }
 
-                g.activityTimer++;
+                g.activityTimer++; // Hoog de activiteitstimer op (tikt elke frame)
 
+                // Na 300 frames (~5 seconden op normale snelheid) wisselt de gast van activiteit
                 if (g.activityTimer >= 300) {
 
                     if (g.currentActivity.equals("ROOM")) {
+                        // Als hij in zijn kamer zat, ga naar een willekeurige faciliteit
                         sendGuestToRandomFacility(g);
                     } else if (g.currentActivity.equals("USING_FACILITY")) {
+                        // Als hij in een faciliteit zat, loop weer terug naar de kamer
                         returnGuestToRoom(g);
                     }
 
-                    g.activityTimer = 0;
+                    g.activityTimer = 0; // Reset de timer
                 }
             }
         }
     }
 
+    /**
+     * Stuurt een gast naar de lobby (de exit-coördinaten van het hotel).
+     */
     private void sendGuestToExit(Guest g) {
         data.areas.stream()
                 .filter(a -> a.AreaType.equalsIgnoreCase("LOBBY"))
                 .findFirst()
                 .ifPresent(lobby -> {
                     double exitY = (lobby.getPos()[1] * data.tileSize) + data.tileSize/2.0;
-                    g.setTarget(20.0, exitY);
+                    g.setTarget(20.0, exitY); // X = 20 is de uiterste linkerkant van de lobby (de deur)
                 });
     }
 
+    /**
+     * Kiest een willekeurige faciliteit (Restaurant, Cinema, Fitness) en stuurt de gast daarheen.
+     */
     private void sendGuestToRandomFacility(Guest g) {
-
         List<String> types = Arrays.asList("RESTAURANT", "CINEMA", "FITNESS");
 
+        // Filter alle hotelruimtes op de bovenstaande types
         var facilities = data.areas.stream()
                 .filter(a -> types.contains(a.AreaType.toUpperCase()))
                 .toList();
 
         if (!facilities.isEmpty()) {
-
+            // Pak een willekeurige faciliteit uit de gefilterde lijst
             var area = facilities.get(random.nextInt(facilities.size()));
 
-            // Center horizontally — no + horizontalOffset, renderer adds it
-            double targetX = (area.getPos()[0] * data.tileSize)
-                    + ((area.getDim()[0] * data.tileSize) / 2.0);
+            // Bereken het exacte middelpunt van deze faciliteit
+            double targetX = (area.getPos()[0] * data.tileSize) + ((area.getDim()[0] * data.tileSize) / 2.0);
             double targetY = (area.getPos()[1] * data.tileSize) + data.tileSize/2.0;
 
             g.currentActivity = "WALKING_TO_FACILITY";
-            g.setTarget(targetX, targetY);
+            g.setTarget(targetX, targetY); // Geef het wandeldoel mee aan de gast
 
             if (logPanel != null) {
-                logPanel.addLog("🏃 Activiteit: Gast " + g.id
-                        + " loopt naar het " + area.AreaType.toLowerCase() + ".");
+                logPanel.addLog("🏃 Activiteit: Gast " + g.id + " loopt naar het " + area.AreaType.toLowerCase() + ".");
             }
         }
     }
 
+    /**
+     * Stuurt de gast weer terug naar zijn/haar eigen gereserveerde hotelkamer.
+     */
     private void returnGuestToRoom(Guest g) {
-
         if (g.assignedRoomId == -1) return;
 
         data.areas.stream()
                 .filter(a -> a.id == g.assignedRoomId)
                 .findFirst()
                 .ifPresent(room -> {
-
-                    // Center horizontally — no + horizontalOffset
-                    double targetX = (room.getPos()[0] * data.tileSize)
-                            + ((room.getDim()[0] * data.tileSize) / 2.0);
+                    // Bereken het middelpunt van de eigen hotelkamer
+                    double targetX = (room.getPos()[0] * data.tileSize) + ((room.getDim()[0] * data.tileSize) / 2.0);
                     double targetY = (room.getPos()[1] * data.tileSize) + data.tileSize/2.0;
 
                     g.currentActivity = "WALKING_TO_ROOM";
                     g.setTarget(targetX, targetY);
 
                     if (logPanel != null) {
-                        logPanel.addLog("🛏️ Terugkeer: Gast " + g.id
-                                + " loopt terug naar hotelkamer " + g.assignedRoomId + ".");
+                        logPanel.addLog("🛏️ Terugkeer: Gast " + g.id + " loopt terug naar hotelkamer " + g.assignedRoomId + ".");
                     }
                 });
     }
 
+    /**
+     * Wiskundige bounding-box check om te kijken of een gast zich binnen een bepaald type ruimte bevindt.
+     */
     private boolean isAtArea(Guest g, String type) {
-
         return data.areas.stream().anyMatch(a -> {
-
             if (!a.AreaType.equalsIgnoreCase(type)) return false;
 
-            // No + horizontalOffset — g.x is in logical coordinates
             int areaX = a.getPos()[0] * data.tileSize;
             int areaY = a.getPos()[1] * data.tileSize;
 
+            // Controleer of de X- en Y-coördinaten van de gast binnen de grenzen van de Area vallen (+- 15 pixels marge)
             return g.x >= (areaX - 15) &&
                     g.x <= (areaX + (a.getDim()[0] * data.tileSize) + 15) &&
                     g.y >= areaY &&
@@ -189,8 +209,10 @@ public class GuestActivityController {
         });
     }
 
+    /**
+     * Controleert of de gast dicht genoeg bij zijn berekende kamerdoel staat (binnen een marge van 15 pixels).
+     */
     private boolean isAtAssignedRoom(Guest g) {
-
         if (g.assignedRoomId == -1) return false;
 
         return Math.abs(g.x - g.targetX) < 15 &&
