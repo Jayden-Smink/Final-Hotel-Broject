@@ -34,7 +34,7 @@ public class SimulationController implements HotelEventListener {
         this.elevatorController = new ElevatorController(data, logPanel);
         this.receptionistController = new ReceptionistController(data, logPanel);
 
-        // 2. Initialiseer de GuestController en geef de receptionistController mee (Aanpassing docent)
+        // 2. Initialiseer de GuestController en geef de receptionistController mee
         this.guestController = new GuestController(data, logPanel, this.receptionistController);
 
         // 3. Initialiseer de overige controllers
@@ -45,12 +45,13 @@ public class SimulationController implements HotelEventListener {
         this.eventManager = new HotelEventManager();
         eventManager.register(this);
 
-        // Start het scenario (in dit geval scenario 3)
-        eventManager.start(2);
+        // Start het gekozen scenario uit de SettingsDialog
+        System.out.println("Gestart scenario: " + selectedScenario);
+        eventManager.start(selectedScenario);
     }
 
     /**
-     * OBSERVER PATTERN - Vangt binnenkomende gebeurtenissen op vanuit de HotelEventManager.
+     * OBSERVER PATTERN - Vangt binnenkomende gebeurtenissen op vanuit dedjalla HotelEventManager.
      */
     @Override
     public void notify(HotelEvent event) {
@@ -59,7 +60,7 @@ public class SimulationController implements HotelEventListener {
         switch (event.getEventType()) {
 
             case CHECK_IN:
-                // We delegeeren de taak nu direct en slank naar de GuestController (Architectuur aanpassing docent)
+                // Delegeer check-in direct naar GuestController
                 guestController.processCheckIn(
                         event.getGuestId(),
                         event.getData() // Dit is het preferredRoomId
@@ -78,7 +79,7 @@ public class SimulationController implements HotelEventListener {
                             .filter(a -> a.AreaType.equalsIgnoreCase("LOBBY"))
                             .findFirst()
                             .ifPresent(lobby -> {
-                                double exitY = (lobby.getPos()[1] * data.tileSize) + data.tileSize/2.0;
+                                double exitY = (lobby.getPos()[1] * data.tileSize) + data.tileSize / 2.0;
                                 leavingGuest.setTarget(20.0, exitY); // Stuur de gast naar de hoteluitgang (X=20)
                             });
 
@@ -86,7 +87,8 @@ public class SimulationController implements HotelEventListener {
                         logPanel.addLog("🚪 Gast " + leavingGuest.id + " checkt uit.");
                     }
                 }
-                // Merk op: de daadwerkelijke verwijdering uit het hotel gebeurt in de GuestActivityController zodra het doel bereikt is.
+
+                // De daadwerkelijke verwijdering uit het hotel gebeurt in de GuestActivityController zodra het doel bereikt is.
                 break;
 
             case NEED_FOOD:
@@ -110,7 +112,10 @@ public class SimulationController implements HotelEventListener {
             case CLEANING_EMERGENCY:
                 // Delegeer het noodgeval direct naar de CleanerController
                 cleanerController.handleCleaningEmergency(event.getData());
-                if (logPanel != null) logPanel.addLog("🧹 Cleaning emergency!");
+
+                if (logPanel != null) {
+                    logPanel.addLog("🧹 Cleaning emergency!");
+                }
                 break;
 
             case EVACUATE:
