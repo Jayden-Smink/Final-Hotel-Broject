@@ -6,8 +6,6 @@ import hotelevents.HotelEventManager;
 import model.*;
 import view.LogPanel;
 import controller.CleanerController;
-import factory.PersonFactory;
-import model.PersonType;
 
 /**
  * De centrale controller van de simulatie. Deze klasse luistert naar hotel-events
@@ -33,10 +31,14 @@ public class SimulationController implements HotelEventListener {
         this.data = data;
         this.logPanel = logPanel;
 
-        // Initialiseer alle sub-controllers en geef de benodigde data/panels mee
+        // 1. Initialiseer eerst de controllers die geen afhankelijkheden hebben
         this.elevatorController = new ElevatorController(data);
         this.receptionistController = new ReceptionistController(data, logPanel);
-        this.guestController = new GuestController(data, logPanel);
+
+        // 2. Initialiseer de GuestController en geef de receptionistController mee (Aanpassing docent)
+        this.guestController = new GuestController(data, logPanel, this.receptionistController);
+
+        // 3. Initialiseer de overige controllers
         this.guestActivityController = new GuestActivityController(data, receptionistController, logPanel);
         this.cleanerController = new CleanerController(data, logPanel);
 
@@ -45,7 +47,7 @@ public class SimulationController implements HotelEventListener {
         eventManager.register(this);
 
         // Start het scenario (in dit geval scenario 3)
-        eventManager.start(3);
+        eventManager.start(2);
     }
 
     /**
@@ -58,24 +60,11 @@ public class SimulationController implements HotelEventListener {
         switch (event.getEventType()) {
 
             case CHECK_IN:
-
-                // OUDE CODE:
-                // Guest guest = new Guest(event.getGuestId(), 0, 0);
-
-                // NIEUWE DYNAMISCHE CODE VIA DE FACTORY:
-                Guest guest = PersonFactory.createGuest(PersonType.GUEST, event.getGuestId(), 0, 0);
-
-                // Vanaf hier blijft de logica precies hetzelfde
-                guestController.spawnGuest(guest);
-
-                receptionistController.handleCheckIn(
+                // We delegeeren de taak nu direct en slank naar de GuestController (Architectuur aanpassing docent)
+                guestController.processCheckIn(
                         event.getGuestId(),
-                        event.getData()
+                        event.getData() // Dit is het preferredRoomId
                 );
-
-                if (logPanel != null) {
-                    logPanel.addLog("👤 Gast " + guest.id + " is ingecheckt.");
-                }
                 break;
 
             case CHECK_OUT:
