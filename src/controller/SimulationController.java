@@ -6,6 +6,8 @@ import hotelevents.HotelEventManager;
 import model.*;
 import view.LogPanel;
 import controller.CleanerController;
+import factory.PersonFactory;
+import model.PersonType;
 
 /**
  * De centrale controller van de simulatie. Deze klasse luistert naar hotel-events
@@ -56,17 +58,16 @@ public class SimulationController implements HotelEventListener {
         switch (event.getEventType()) {
 
             case CHECK_IN:
-                // Maak een nieuw, leeg gast-object aan op positie (0,0)
-                Guest guest = new Guest(
-                        event.getGuestId(),
-                        0,
-                        0
-                );
 
-                // Laat de GuestController de gast fysiek in de lobby spawnen en naar de receptie sturen
+                // OUDE CODE:
+                // Guest guest = new Guest(event.getGuestId(), 0, 0);
+
+                // NIEUWE DYNAMISCHE CODE VIA DE FACTORY:
+                Guest guest = PersonFactory.createGuest(PersonType.GUEST, event.getGuestId(), 0, 0);
+
+                // Vanaf hier blijft de logica precies hetzelfde
                 guestController.spawnGuest(guest);
 
-                // Laat de receptionist administratief een kamer zoeken en toewijzen
                 receptionistController.handleCheckIn(
                         event.getGuestId(),
                         event.getData()

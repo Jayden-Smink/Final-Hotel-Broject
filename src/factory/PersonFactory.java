@@ -5,7 +5,8 @@ import model.PersonType;
 
 public class PersonFactory {
 
-    public static Object createGuest(PersonType type, int id, int x, int y) {
+    // Verander 'Object' naar 'Guest' voor een type-veilige return
+    public static Guest createGuest(PersonType type, int id, int x, int y) {
         switch (type) {
             case GUEST:
                 return new Guest(id, x, y);
