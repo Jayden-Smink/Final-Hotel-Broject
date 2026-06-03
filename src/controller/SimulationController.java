@@ -5,7 +5,6 @@ import hotelevents.HotelEventListener;
 import hotelevents.HotelEventManager;
 import model.*;
 import view.LogPanel;
-import controller.CleanerController;
 
 /**
  * De centrale controller van de simulatie. Deze klasse luistert naar hotel-events
@@ -26,7 +25,7 @@ public class SimulationController implements HotelEventListener {
     private final HotelEventManager eventManager; // De externe event-generator (uit de JAR)
     private final CleanerController cleanerController;
 
-    public SimulationController(SimulationData data, LogPanel logPanel) {
+    public SimulationController(SimulationData data, LogPanel logPanel, int selectedScenario) {
 
         this.data = data;
         this.logPanel = logPanel;
