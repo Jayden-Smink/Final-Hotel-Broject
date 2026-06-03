@@ -6,19 +6,19 @@ import java.awt.*;
 
 public class GuestRenderer {
 
-    public static void draw(Graphics2D g2, Guest g, int globalOffset) {
+    public static void draw(Graphics2D g2, Guest guest, int globalOffset) {
 
         // Gast is binnen (kamer/faciliteit) — niet tekenen
-        if (g.state == GuestState.IDLE && !g.isCheckingOut) {
+        if (guest.state == GuestState.IDLE && !guest.isCheckingOut) {
             return;
         }
 
-        int drawX = (int) g.x + globalOffset;
-        int drawY = (int) g.y;
+        int drawX = (int) guest.x + globalOffset;
+        int drawY = (int) guest.y;
 
-        if (g.isCheckingOut) {
+        if (guest.isCheckingOut) {
             g2.setColor(Color.RED);
-        } else if (g.state == GuestState.IN_LIFT) {
+        } else if (guest.state == GuestState.IN_LIFT) {
             return;
         } else {
             g2.setColor(Color.CYAN);
@@ -28,6 +28,6 @@ public class GuestRenderer {
 
         g2.setColor(Color.WHITE);
         g2.setFont(new Font("Arial", Font.PLAIN, 12));
-        g2.drawString("G" + g.id, drawX - 8, drawY - 12);
+        g2.drawString("G" + guest.id, drawX - 8, drawY - 12);
     }
 }
