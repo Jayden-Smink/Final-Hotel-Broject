@@ -44,13 +44,19 @@ public class GuestActivityController {
             if (g.isCheckingOut && g.state == GuestState.AT_DESTINATION
                     && Math.abs(g.x - 20.0) < 15) {
 
-                roomController.maakGastVrij(data, g.id); // Geef de hotelkamer weer vrij
-                data.guests.remove(g.id);               // Verwijder de gast fysiek uit de simulatie
+                int roomId = g.assignedRoomId; // ← save before freeing
 
-                if (logPanel != null) {
-                    logPanel.addLog("🚶 Gast " + g.id + " heeft het hotel verlaten.");
+                roomController.maakGastVrij(data, g.id);
+                data.guests.remove(g.id);
+
+                // Add dirty room to cleaner's list
+                if (roomId != -1 && data.cleaner != null) {
+                    data.cleaner.dirtyRooms.add(roomId);
+                    if (logPanel != null) logPanel.addLog("🛏️ Kamer " + roomId + " toegevoegd aan schoonmaaklijst.");
                 }
-                continue; // Ga direct door naar de volgende gast
+
+                if (logPanel != null) logPanel.addLog("🚶 Gast " + g.id + " heeft het hotel verlaten.");
+                continue;
             }
 
             // Logica voor gasten die hun tussentijdse bestemming hebben bereikt
