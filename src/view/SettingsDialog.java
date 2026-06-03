@@ -26,7 +26,7 @@ public class SettingsDialog extends JDialog {
         );
 
         JPanel cleaningPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        cleaningPanel.add(new JLabel("Schoonmaaktijd (HTE):"));
+        cleaningPanel.add(new JLabel("Cleaningtime (HTE):"));
         cleaningPanel.add(cleaningSpinner);
 
         // Scenario instelling
