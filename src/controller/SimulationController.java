@@ -31,7 +31,7 @@ public class SimulationController implements HotelEventListener {
         this.logPanel = logPanel;
 
         // 1. Initialiseer eerst de controllers die geen afhankelijkheden hebben
-        this.elevatorController = new ElevatorController(data);
+        this.elevatorController = new ElevatorController(data, logPanel);
         this.receptionistController = new ReceptionistController(data, logPanel);
 
         // 2. Initialiseer de GuestController en geef de receptionistController mee
@@ -51,7 +51,7 @@ public class SimulationController implements HotelEventListener {
     }
 
     /**
-     * OBSERVER PATTERN - Vangt binnenkomende gebeurtenissen op vanuit de HotelEventManager.
+     * OBSERVER PATTERN - Vangt binnenkomende gebeurtenissen op vanuit dedjalla HotelEventManager.
      */
     @Override
     public void notify(HotelEvent event) {
