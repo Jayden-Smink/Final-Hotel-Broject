@@ -1,7 +1,7 @@
 package controller;
 
 import model.*;
-import model.Cleaner;
+
 
 /**
  * De bewegingsmotor van de simulatie. Berekenen frame-by-frame de X- en Y-verschuivingen
@@ -83,36 +83,6 @@ public class GuestMover {
                 g.y = g.targetY;
                 g.forceStairs = false;
                 g.state = GuestState.AT_DESTINATION;
-            }
-        }
-    }
-
-    /**
-     * Regelt de stapsgewijze verplaatsing van de schoonmaker.
-     * NB: De schoonmaker gebruikt NOOIT de lift, altijd de trap.
-     */
-    public void moveCleaner(Cleaner cleaner) {
-        int currentFloorY = (int) ((cleaner.y + 10) / data.tileSize);
-        int targetFloorY  = (int) ((cleaner.targetY + 10) / data.tileSize);
-
-        if (currentFloorY != targetFloorY) {
-            double stairX = routeCalculator.getStairX();
-
-            if (Math.abs(cleaner.x - stairX) > cleaner.speed) {
-                cleaner.x += (cleaner.x < stairX) ? cleaner.speed : -cleaner.speed;
-            } else {
-                cleaner.x = stairX;
-                double stairSpeed = cleaner.speed * 0.5;
-                cleaner.y += (cleaner.y < cleaner.targetY) ? stairSpeed : -stairSpeed;
-            }
-        } else {
-            if (Math.abs(cleaner.x - cleaner.targetX) > cleaner.speed) {
-                cleaner.x += (cleaner.x < cleaner.targetX) ? cleaner.speed : -cleaner.speed;
-            } else if (Math.abs(cleaner.y - cleaner.targetY) > cleaner.speed) {
-                cleaner.y += (cleaner.y < cleaner.targetY) ? cleaner.speed : -cleaner.speed;
-            } else {
-                cleaner.x = cleaner.targetX;
-                cleaner.y = cleaner.targetY;
             }
         }
     }
