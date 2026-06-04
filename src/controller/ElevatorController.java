@@ -39,8 +39,7 @@ public class ElevatorController {
             for (int i = elevator.waitingGuests.size() - 1; i >= 0; i--) {
                 if (elevator.passengers.size() >= elevator.maxCapacity) break;
                 Guest g = elevator.waitingGuests.get(i);
-                int guestFloorY = (int) ((g.y + 10) / data.tileSize);
-                if (guestFloorY == currentFloorY) {
+                if (g.waitingOnFloor == currentFloorY) {
                     elevator.waitingGuests.remove(i);
                     g.elevatorWaitTimer = 0;
                     g.state = GuestState.IN_LIFT;
