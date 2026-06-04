@@ -30,7 +30,7 @@ class CleanerControllerTest {
         areas.add(makeArea(0, "LOBBY", "0,5", 50));
         areas.add(makeArea(1, "TRAP", "3,0", 10));
         areas.add(makeArea(10, "ROOM", "1,2", 5));
-        data = new SimulationData(areas, 10, 1); // 1s cleaning = 60 frames
+        data = new SimulationData(areas, 10, 30, 30, 10, 15); // 1s cleaning = 60 frames
         controller = new CleanerController(data, null);
     }
 

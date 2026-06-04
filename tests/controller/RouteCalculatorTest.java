@@ -33,7 +33,7 @@ class RouteCalculatorTest {
         List<Area> areas = new ArrayList<>();
         areas.add(makeArea(0, "LOBBY", "0,5"));
         areas.add(makeArea(1, "TRAP", "3,0"));
-        data = new SimulationData(areas, 10, 30);
+        data = new SimulationData(areas, 10, 30, 30, 10, 15);
         data.tileSize = TILE;
         data.horizontalOffset = OFFSET;
         stairModel = new StairModel(data.areas);
@@ -99,7 +99,7 @@ class RouteCalculatorTest {
     void calculateStairTime_returnsMaxDoubleWhenNoStairArea() {
         List<Area> noStairs = new ArrayList<>();
         noStairs.add(makeArea(0, "LOBBY", "0,5"));
-        SimulationData d2 = new SimulationData(noStairs, 10, 30);
+        SimulationData d2 = new SimulationData(noStairs, 10, 30, 30, 10, 15);
         RouteCalculator calc2 = new RouteCalculator(d2, new StairModel(noStairs));
         assertEquals(Double.MAX_VALUE, calc2.calculateStairTime(0, 0, 3));
     }
@@ -140,7 +140,7 @@ class RouteCalculatorTest {
     void getStairX_returnsMinusOneWhenNoStairs() {
         List<Area> noStairs = new ArrayList<>();
         noStairs.add(makeArea(0, "LOBBY", "0,5"));
-        SimulationData d2 = new SimulationData(noStairs, 10, 30);
+        SimulationData d2 = new SimulationData(noStairs, 10, 30, 30, 10, 15);
         RouteCalculator calc2 = new RouteCalculator(d2, new StairModel(noStairs));
         assertEquals(-1.0, calc2.getStairX(), 0.001);
     }

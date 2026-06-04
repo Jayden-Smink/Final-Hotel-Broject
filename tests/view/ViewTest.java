@@ -87,7 +87,7 @@ class TimeControlPanelTest {
         engine = new HotelTimeEngine();
         List<Area> areas = new ArrayList<>();
         areas.add(makeArea("LOBBY", "0,5"));
-        data = new SimulationData(areas, 10, 30);
+        data = new SimulationData(areas, 10, 30, 30, 10, 15);
         panel = new TimeControlPanel(engine, data);
     }
 

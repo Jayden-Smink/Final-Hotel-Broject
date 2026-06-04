@@ -5,9 +5,10 @@ public class Guest extends Person {
     public int assignedRoomId = -1;
     public boolean isCheckingOut = false;
 
+    public String currentFacility = ""; // ADD THIS
+    public String currentActivity = "NONE";
     public int activityTimer = 0;
     public boolean isInRoom = false;
-    public String currentActivity = "NONE";
 
     public int elevatorWaitTimer = 0;  // hoe lang de gast al wacht op de lift
     public boolean forceStairs = false; // geeft op en neemt de trap
