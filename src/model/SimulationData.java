@@ -11,8 +11,9 @@ public class SimulationData {
     public Cleaner cleaner;
     public CleanerSettings cleanerSettings;
     public GuestSettings guestSettings;
+    public FacilitySettings facilitySettings;
 
-    public SimulationData(List<Area> areas, int capacity, int cleaningSeconds) {
+    public SimulationData(List<Area> areas, int capacity, int cleaningSeconds, int cinemaDurationSeconds, int restaurantDurationSeconds, int fitnessDurationSeconds) {
         this.areas = areas;
         this.cleanerSettings = new CleanerSettings(cleaningSeconds);
         this.guestSettings = new GuestSettings(15);
@@ -24,6 +25,7 @@ public class SimulationData {
 
         this.elevator = new Elevator(5.0, bottomFloor * tileSize, tileSize);
         this.elevator.maxCapacity = capacity;
+        this.facilitySettings = new FacilitySettings(cinemaDurationSeconds, restaurantDurationSeconds, fitnessDurationSeconds);
 
         areas.stream()
                 .filter(a -> a.AreaType.equalsIgnoreCase("LOBBY"))

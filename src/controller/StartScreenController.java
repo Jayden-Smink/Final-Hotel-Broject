@@ -17,7 +17,8 @@ public class StartScreenController {
         this.model = model;
     }
 
-    public void handleStart(JFrame parent, int capacity, int cleaningSeconds, int selectedScenario) {
+    public void handleStart(JFrame parent, int capacity, int cleaningSeconds, int selectedScenario,
+                            int cinemaDurationSeconds, int restaurantDurationSeconds, int fitnessDurationSeconds) {
 
         // 1. FILE PICKER
         JFileChooser chooser = new JFileChooser();
@@ -57,7 +58,10 @@ public class StartScreenController {
                 areas,
                 capacity,
                 cleaningSeconds,
-                selectedScenario
+                selectedScenario,
+                cinemaDurationSeconds,
+                restaurantDurationSeconds,
+                fitnessDurationSeconds
         );
 
         JFrame frame = new JFrame("Hotel Simulator");

@@ -24,11 +24,14 @@ public class SimulationPanel extends JPanel {
             List<Area> areas,
             int capacity,
             int cleaningSeconds,
-            int selectedScenario
+            int selectedScenario,
+            int cinemaDurationSeconds,      // ADD
+            int restaurantDurationSeconds,  // ADD
+            int fitnessDurationSeconds      // ADD
     ) {
 
         // Simulatie data
-        this.data = new SimulationData(areas, capacity, cleaningSeconds);
+        this.data = new SimulationData(areas, capacity, cleaningSeconds, cinemaDurationSeconds, restaurantDurationSeconds, fitnessDurationSeconds);
 
         // Renderer
         this.renderer = new SimulationRenderer(data);

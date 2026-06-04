@@ -117,7 +117,8 @@ public class GuestActivityController {
                 g.activityTimer++; // Hoog de activiteitstimer op (tikt elke frame)
 
                 // Na 300 frames (~5 seconden op normale snelheid) wisselt de gast van activiteit
-                if (g.activityTimer >= 300) {
+                int duration = getFacilityDuration(g);
+                if (g.activityTimer >= duration) {
 
                     if (g.currentActivity.equals("ROOM")) {
                         // Als hij in zijn kamer zat, ga naar een willekeurige faciliteit
@@ -166,6 +167,7 @@ public class GuestActivityController {
             double targetY = (area.getPos()[1] * data.tileSize) + data.tileSize/2.0;
 
             g.currentActivity = "WALKING_TO_FACILITY";
+            g.currentFacility = area.AreaType.toUpperCase(); // ADD THIS
             g.setTarget(targetX, targetY); // Geef het wandeldoel mee aan de gast
 
             if (logPanel != null) {
@@ -223,5 +225,21 @@ public class GuestActivityController {
 
         return Math.abs(g.x - g.targetX) < 15 &&
                 Math.abs(g.y - g.targetY) < 15;
+    }
+
+    private int getFacilityDuration(Guest g) {
+        if (g.currentActivity.equals("USING_FACILITY")) {
+            switch (g.currentFacility) {
+                case "CINEMA":
+                    return data.facilitySettings.getCinemaDurationFrames();
+                case "RESTAURANT":
+                    return data.facilitySettings.getRestaurantDurationFrames();
+                case "FITNESS":
+                    return data.facilitySettings.getFitnessDurationFrames();
+                default:
+                    return 300;
+            }
+        }
+        return 300;
     }
 }
