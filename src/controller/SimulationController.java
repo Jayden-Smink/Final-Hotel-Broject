@@ -159,4 +159,7 @@ public class SimulationController implements HotelEventListener {
         // 4. Verplaats de schoonmaker en update zijn poets-timer
         cleanerController.update();
     }
+    public CleanerController getCleanerController() {
+        return this.cleanerController;
+    }
 }

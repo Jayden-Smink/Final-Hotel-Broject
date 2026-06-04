@@ -6,9 +6,10 @@ import model.CleanerState;
 import model.StairModel;
 import model.SimulationData;
 import view.LogPanel;
+import java.util.List;
 
 /**
- * Beheert de logica en statusovergangen van de schoonmaker in de hotelsimulatie.
+ * Beheert de logica en statusovergangen van MEERDERE schoonmakers in de hotelsimulatie via een CleanerPool.
  */
 public class CleanerController {
     private final SimulationData data;
@@ -19,66 +20,84 @@ public class CleanerController {
 
     // SRP Verbetering: Nu gekoppeld aan de specifieke CleanerMover in plaats van GuestMover
     private final CleanerMover cleanerMover;
+    private final CleanerPool cleanerPool; // SRP: De pool beheert de verzameling schoonmakers
 
     public CleanerController(SimulationData data, LogPanel logPanel) {
         this.data = data;
         this.logPanel = logPanel;
 
-        // GEFIXT: We geven nu direct de StairModel mee aan de CleanerMover constructor
+        // We geven direct de StairModel mee aan de CleanerMover constructor
         this.cleanerMover = new CleanerMover(data, new StairModel(data.areas));
+        this.cleanerPool = new CleanerPool();
     }
 
     public void handleCleaningEmergency(int roomId) {
-        Cleaner cleaner = data.cleaner;
-        if (cleaner == null || cleaner.state != CleanerState.IDLE) return;
+        Cleaner mainCleaner = data.cleaner;
+        if (mainCleaner == null) return;
 
-        for (int i = 0; i < data.areas.size(); i++) {
-            Area a = data.areas.get(i);
-            if (a.AreaType.equalsIgnoreCase("ROOM") && !a.currentOccupants.isEmpty()) {
-                assignCleanerToRoom(cleaner, a.id);
-                return;
+        // Zorg ervoor dat de pool gevuld en klaar is
+        cleanerPool.setupWorkers(mainCleaner);
+
+        // Zoek naar de eerste beschikbare (IDLE) schoonmaker in de pool voor het noodgeval
+        for (Cleaner worker : cleanerPool.getWorkers()) {
+            if (worker.state == CleanerState.IDLE) {
+                for (int i = 0; i < data.areas.size(); i++) {
+                    Area a = data.areas.get(i);
+                    if (a.AreaType.equalsIgnoreCase("ROOM") && !a.currentOccupants.isEmpty()) {
+                        assignCleanerToRoom(worker, a.id);
+                        return; // Noodgeval succesvol toegewezen aan deze specifieke werknemer
+                    }
+                }
             }
         }
     }
 
     public void update() {
-        Cleaner cleaner = data.cleaner;
-        if (cleaner == null) return;
+        Cleaner mainCleaner = data.cleaner;
+        if (mainCleaner == null) return;
 
-        // Roep de nieuwe mover aan om de posities te berekenen
-        cleanerMover.moveCleaner(cleaner);
+        // Zorgt dat de pool automatisch gevuld is met de 2 schoonmakers zodra de simulatie start
+        cleanerPool.setupWorkers(mainCleaner);
 
-        if (cleaner.state == CleanerState.CLEANING) {
-            cleaner.cleaningTimer++;
+        // GEFIXT: We loopen nu onafhankelijk door alle actieve schoonmakers in het hotel
+        for (Cleaner worker : cleanerPool.getWorkers()) {
 
-            if (cleaner.cleaningTimer >= data.cleanerSettings.getCleaningDurationFrames()) {
-                cleaner.cleaningTimer = 0;
+            // Roep de mover aan om de posities te berekenen voor deze specifieke werknemer
+            cleanerMover.moveCleaner(worker);
 
-                if (!cleaner.dirtyRooms.isEmpty()) {
-                    int nextRoomId = cleaner.dirtyRooms.remove(0);
-                    assignCleanerToRoom(cleaner, nextRoomId);
-                    if (logPanel != null) logPanel.addLog("✅ Klaar! Schoonmaker gaat naar volgende kamer.");
-                } else {
-                    cleaner.state = CleanerState.WALKING_BACK;
-                    sendCleanerToLobby(cleaner);
-                    if (logPanel != null) logPanel.addLog("✅ Schoonmaker klaar! Gaat terug.");
+            if (worker.state == CleanerState.CLEANING) {
+                worker.cleaningTimer++;
+
+                if (worker.cleaningTimer >= data.cleanerSettings.getCleaningDurationFrames()) {
+                    worker.cleaningTimer = 0;
+
+                    // Pak de eerstvolgende taak uit de centrale inbox van de mainCleaner
+                    if (!mainCleaner.dirtyRooms.isEmpty()) {
+                        int nextRoomId = mainCleaner.dirtyRooms.remove(0);
+                        assignCleanerToRoom(worker, nextRoomId);
+                        if (logPanel != null) logPanel.addLog("✅ Klaar! Schoonmaker " + worker.id + " gaat naar volgende kamer.");
+                    } else {
+                        worker.state = CleanerState.WALKING_BACK;
+                        sendCleanerToLobby(worker);
+                        if (logPanel != null) logPanel.addLog("✅ Schoonmaker " + worker.id + " klaar! Gaat terug.");
+                    }
                 }
             }
-        }
 
-        if (Math.abs(cleaner.x - cleaner.targetX) < 5 && Math.abs(cleaner.y - cleaner.targetY) < 5) {
-            if (cleaner.state == CleanerState.WALKING_TO_ROOM) {
-                cleaner.state = CleanerState.CLEANING;
-                if (logPanel != null) logPanel.addLog("🧽 Schoonmaker is begonnen met schoonmaken.");
-            } else if (cleaner.state == CleanerState.WALKING_BACK) {
-                cleaner.state = CleanerState.IDLE;
-                cleaner.assignedRoomId = -1;
+            if (Math.abs(worker.x - worker.targetX) < 5 && Math.abs(worker.y - worker.targetY) < 5) {
+                if (worker.state == CleanerState.WALKING_TO_ROOM) {
+                    worker.state = CleanerState.CLEANING;
+                    if (logPanel != null) logPanel.addLog("🧽 Schoonmaker " + worker.id + " is begonnen met schoonmaken.");
+                } else if (worker.state == CleanerState.WALKING_BACK) {
+                    worker.state = CleanerState.IDLE;
+                    worker.assignedRoomId = -1;
+                }
             }
-        }
 
-        if (cleaner.state == CleanerState.IDLE && !cleaner.dirtyRooms.isEmpty()) {
-            int nextRoomId = cleaner.dirtyRooms.remove(0);
-            assignCleanerToRoom(cleaner, nextRoomId);
+            if (worker.state == CleanerState.IDLE && !mainCleaner.dirtyRooms.isEmpty()) {
+                int nextRoomId = mainCleaner.dirtyRooms.remove(0);
+                assignCleanerToRoom(worker, nextRoomId);
+            }
         }
     }
 
@@ -93,7 +112,7 @@ public class CleanerController {
                 double ty = (a.getPos()[1] * tileSize) + 25.0;
                 cleaner.setTarget(tx, ty);
 
-                if (logPanel != null) logPanel.addLog("🧹 Schoonmaker gaat naar kamer " + a.id + " op verdieping " + a.getPos()[1]);
+                if (logPanel != null) logPanel.addLog("🧹 Schoonmaker " + cleaner.id + " gaat naar kamer " + a.id + " op verdieping " + a.getPos()[1]);
                 return;
             }
         }
@@ -111,5 +130,12 @@ public class CleanerController {
                 return;
             }
         }
+    }
+
+    /**
+     * Geeft de lijst met actieve schoonmakers terug ten behoeve van de rendering/view laag.
+     */
+    public List<Cleaner> getActiveCleaners() {
+        return cleanerPool.getWorkers();
     }
 }

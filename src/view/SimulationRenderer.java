@@ -1,5 +1,6 @@
 package view;
 
+import controller.CleanerController; // NIEUWE IMPORT
 import model.*;
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -12,6 +13,7 @@ import model.CleanerState;
 
 public class SimulationRenderer {
     private final SimulationData data;
+    private final CleanerController cleanerController; // KOPPELING: Nu hebben we toegang tot de pool!
 
     private final Map<String, BufferedImage> assetCache = new HashMap<>();
 
@@ -28,9 +30,11 @@ public class SimulationRenderer {
             "LOBBY", "RECEPTION"
     );
 
-    public SimulationRenderer(SimulationData data) {
+    // AANPASSING: De constructor verwacht nu ook de cleanerController
+    public SimulationRenderer(SimulationData data, CleanerController cleanerController) {
         loadAssets();
         this.data = data;
+        this.cleanerController = cleanerController;
     }
 
     private void loadAssets() {
@@ -71,9 +75,8 @@ public class SimulationRenderer {
         // 4. Teken gasten
         drawGuests(g2, data);
 
-        // 5. Teken schoonmaker
-        drawCleaner(g2, data);
-
+        // 5. Teken schoonmakers (NU MEERVOUD)
+        drawCleaners(g2);
     }
 
     private void drawAreas(Graphics2D g2, SimulationData data, boolean frontLayerOnly) {
@@ -119,18 +122,27 @@ public class SimulationRenderer {
             }
         }
     }
-    private void drawCleaner(Graphics2D g2, SimulationData data) {
-        if (data.cleaner == null || data.cleaner.state == CleanerState.CLEANING) return;
 
-        int drawX = (int) data.cleaner.x + data.horizontalOffset;
-        int drawY = (int) data.cleaner.y;
+    // GEFIXT: Loopt nu door alle schoonmakers uit de pool heen!
+    private void drawCleaners(Graphics2D g2) {
+        if (cleanerController == null) return;
 
-        g2.setColor(new Color(50, 205, 50));
-        g2.fillOval(drawX - 10, drawY - 10, 20, 20);
+        for (Cleaner cleaner : cleanerController.getActiveCleaners()) {
+            // Als de schoonmaker in een kamer aan het poetsen is, verbergen we de stip (de kamer wordt immers al groen)
+            if (cleaner.state == CleanerState.CLEANING) continue;
 
-        g2.setColor(Color.WHITE);
-        g2.setFont(new Font("Arial", Font.PLAIN, 12));
-        g2.drawString("C", drawX - 4, drawY - 12);
+            int drawX = (int) cleaner.x + data.horizontalOffset;
+            int drawY = (int) cleaner.y;
+
+            // Teken de groene stip voor de schoonmaker
+            g2.setColor(new Color(50, 205, 50));
+            g2.fillOval(drawX - 10, drawY - 10, 20, 20);
+
+            // Teken "C1", "C2", etc. boven de stip zodat je ziet wie wie is
+            g2.setColor(Color.WHITE);
+            g2.setFont(new Font("Arial", Font.BOLD, 11));
+            g2.drawString("C" + cleaner.id, drawX - 6, drawY - 12);
+        }
     }
 
     /**
@@ -214,20 +226,20 @@ public class SimulationRenderer {
             drawGuestCountBadge(g2, x, y, w, guestCount);
         }
 
-        // Green overlay — cleaner is cleaning this room
-        if (data.cleaner != null &&
-                data.cleaner.assignedRoomId == a.id &&
-                data.cleaner.state == CleanerState.CLEANING) {
-            Composite original = g2.getComposite();
-            g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.35f));
-            g2.setColor(new Color(50, 220, 50));
-            g2.fillRect(x, y, w, h);
-            g2.setComposite(original);
+        // GEFIXT: Groene overlay — Kamer wordt nu groen als EEN VAN DE schoonmakers hier poetst
+        if (cleanerController != null) {
+            for (Cleaner cleaner : cleanerController.getActiveCleaners()) {
+                if (cleaner.assignedRoomId == a.id && cleaner.state == CleanerState.CLEANING) {
+                    Composite original = g2.getComposite();
+                    g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.35f));
+                    g2.setColor(new Color(50, 220, 50));
+                    g2.fillRect(x, y, w, h);
+                    g2.setComposite(original);
+                    break; // Eén groene overlay is genoeg als er gepoetst wordt
+                }
+            }
         }
-
-
     }
-
 
     /**
      * Tekent een klein badge-cirkel met het aantal gasten in de rechterbovenhoek van de area.

@@ -27,17 +27,17 @@ public class SimulationPanel extends JPanel {
             int selectedScenario
     ) {
 
-        // Simulatie data
+        // 1. Simulatie data initialiseren
         this.data = new SimulationData(areas, capacity, cleaningSeconds);
 
-        // Renderer
-        this.renderer = new SimulationRenderer(data);
-
-        // Log scherm
+        // 2. Log scherm initialiseren (moet vóór de controller, want de controller heeft logPanel nodig)
         this.logPanel = new LogPanel();
 
-        // Controller
+        // 3. Controller initialiseren (deze maakt intern de actieve CleanerController aan)
         this.controller = new SimulationController(data, logPanel, selectedScenario);
+
+        // 4. Renderer initialiseren (GEFIXT: Krijgt nu netjes de data én de cleanerController uit de hoofdcontroller mee)
+        this.renderer = new SimulationRenderer(data, controller.getCleanerController());
 
         // HTE
         this.hte = new HotelTimeEngine();
