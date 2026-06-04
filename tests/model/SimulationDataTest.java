@@ -70,9 +70,15 @@ class SimulationDataTest {
     @Test
     void constructor_cleanerIsNullWhenNoLobby() {
         List<Area> areas = new ArrayList<>();
-        areas.add(makeArea(1, "ROOM", "2,3"));
+        areas.add(makeArea(1, "ROOM", "2,3")); // no LOBBY → cleaner stays null
         SimulationData d = new SimulationData(areas, 10, 30);
         assertNull(d.cleaner);
+    }
+
+    @Test
+    void constructor_areasListIsStored() {
+        SimulationData d = makeData();
+        assertFalse(d.areas.isEmpty());
     }
 
     @Test

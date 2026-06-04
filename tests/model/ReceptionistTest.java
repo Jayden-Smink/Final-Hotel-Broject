@@ -1,5 +1,6 @@
 package model;
 
+import controller.RoomController;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 

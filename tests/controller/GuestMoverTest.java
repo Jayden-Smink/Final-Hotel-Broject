@@ -114,9 +114,10 @@ class GuestMoverTest {
         // Guest at floor 5, target at floor 3 (stairs are at tile-x=3 → x=240, elevator nearby)
         // Force elevator to be faster by placing guest far from stairs
         double floorY = 5 * TILE;
+        int currentFloorY = 5; // tile index
         Guest g = guestAt(1, 5000, floorY + 10); // far from stairs → elevator preferred
         g.setTarget(200, 3 * TILE + 10);
-        data.floorQueues.put(5, new java.util.LinkedList<>());
+        data.floorQueues.putIfAbsent(currentFloorY, new java.util.LinkedList<>());
 
         for (int i = 0; i < 5000; i++) {
             mover.moveGuest(g);

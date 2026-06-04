@@ -5,9 +5,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Queue;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -48,21 +46,23 @@ class ElevatorControllerTest {
 
     @Test
     void update_guestBoardsElevatorFromQueue() {
-        int elevatorFloor = data.elevator.getCurrentFloor();
+        // elevator starts at bottomFloor = 5 (from LOBBY at "0,5")
+        // ElevatorController uses (int)(elevator.curY / tileSize) as queue key → 5
+        int elevatorFloor = data.elevator.getCurrentFloor(); // = 5
         Guest g = new Guest(1, 5.0, elevatorFloor * TILE);
-        g.setTarget(5.0, 2 * TILE); // target: floor 2
+        g.setTarget(5.0, 2 * TILE);
         data.guests.put(g.id, g);
 
-        Queue<Guest> queue = data.floorQueues.computeIfAbsent(elevatorFloor, k -> new LinkedList<>());
-        queue.add(g);
+        // Register queue under the tile-index key the controller will look up
+        data.floorQueues.putIfAbsent(elevatorFloor, new java.util.LinkedList<>());
+        data.floorQueues.get(elevatorFloor).add(g);
 
-        // Run until elevator is stationary so boarding can happen
         for (int i = 0; i < 100; i++) controller.update();
 
         assertTrue(data.elevator.passengers.contains(g)
-                || g.state == GuestState.IN_LIFT
-                || g.state == GuestState.EXITING_LIFT
-                || !queue.contains(g),
+                        || g.state == GuestState.IN_LIFT
+                        || g.state == GuestState.EXITING_LIFT
+                        || !data.floorQueues.get(elevatorFloor).contains(g),
                 "Guest should have left the queue");
     }
 
@@ -72,8 +72,8 @@ class ElevatorControllerTest {
         Guest g = new Guest(1, 5.0, floor * TILE);
         g.setTarget(5.0, 2 * TILE);
         data.guests.put(g.id, g);
-        Queue<Guest> q = data.floorQueues.computeIfAbsent(floor, k -> new LinkedList<>());
-        q.add(g);
+        data.floorQueues.putIfAbsent(floor, new java.util.LinkedList<>());
+        data.floorQueues.get(floor).add(g);
 
         for (int i = 0; i < 100; i++) controller.update();
 
@@ -122,12 +122,12 @@ class ElevatorControllerTest {
         int floor = data.elevator.getCurrentFloor();
         data.elevator.maxCapacity = 2;
 
-        Queue<Guest> q = data.floorQueues.computeIfAbsent(floor, k -> new LinkedList<>());
+        data.floorQueues.putIfAbsent(floor, new java.util.LinkedList<>());
         for (int i = 1; i <= 5; i++) {
             Guest g = new Guest(i, 5.0, floor * TILE);
             g.setTarget(5.0, 2 * TILE);
             data.guests.put(i, g);
-            q.add(g);
+            data.floorQueues.get(floor).add(g);
         }
 
         for (int i = 0; i < 200; i++) controller.update();
@@ -139,16 +139,14 @@ class ElevatorControllerTest {
 
     @Test
     void update_emptyElevatorMovesToFloorWithWaitingGuests() {
-        // Place a guest in queue on floor 2
         int waitFloor = 2;
         Guest g = new Guest(1, 5.0, waitFloor * TILE);
         g.setTarget(5.0, 0);
-        data.floorQueues.computeIfAbsent(waitFloor, k -> new LinkedList<>()).add(g);
+        data.floorQueues.putIfAbsent(waitFloor, new java.util.LinkedList<>());
+        data.floorQueues.get(waitFloor).add(g);
 
-        // Elevator starts at bottom; run a few updates
         for (int i = 0; i < 10; i++) controller.update();
 
-        // Elevator should now target floor 2
         assertEquals(waitFloor, data.elevator.targetFloor);
     }
 }
