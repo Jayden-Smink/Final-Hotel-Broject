@@ -14,22 +14,20 @@ public class CleanerController {
     private final SimulationData data;
     private final LogPanel logPanel;
 
-    // Grid-instellingen voor de grafische weergave (60 pixels per vakje)
     private final int tileSize = 60;
     private final int horizontalOffset = 60;
 
-    // Verantwoordelijk voor de daadwerkelijke beweging over assen en trappen
-    private final GuestMover guestMover;
+    // SRP Verbetering: Nu gekoppeld aan de specifieke CleanerMover in plaats van GuestMover
+    private final CleanerMover cleanerMover;
 
     public CleanerController(SimulationData data, LogPanel logPanel) {
         this.data = data;
         this.logPanel = logPanel;
-        this.guestMover = new GuestMover(data, new StairModel(data.areas));
+
+        // GEFIXT: We geven nu direct de StairModel mee aan de CleanerMover constructor
+        this.cleanerMover = new CleanerMover(data, new StairModel(data.areas));
     }
 
-    /**
-     * Reageert op een schoonmaak-noodgeval door de schoonmaker naar een bezette kamer te sturen.
-     */
     public void handleCleaningEmergency(int roomId) {
         Cleaner cleaner = data.cleaner;
         if (cleaner == null || cleaner.state != CleanerState.IDLE) return;
@@ -43,14 +41,12 @@ public class CleanerController {
         }
     }
 
-    /**
-     * De hoofd-update loop (tikt elke frame). Regelt beweging, timers en statuswissels.
-     */
     public void update() {
         Cleaner cleaner = data.cleaner;
         if (cleaner == null) return;
 
-        guestMover.moveCleaner(cleaner);
+        // Roep de nieuwe mover aan om de posities te berekenen
+        cleanerMover.moveCleaner(cleaner);
 
         if (cleaner.state == CleanerState.CLEANING) {
             cleaner.cleaningTimer++;
@@ -59,12 +55,10 @@ public class CleanerController {
                 cleaner.cleaningTimer = 0;
 
                 if (!cleaner.dirtyRooms.isEmpty()) {
-                    // Ga direct naar de volgende vieze kamer, sla lobby over
                     int nextRoomId = cleaner.dirtyRooms.remove(0);
                     assignCleanerToRoom(cleaner, nextRoomId);
                     if (logPanel != null) logPanel.addLog("✅ Klaar! Schoonmaker gaat naar volgende kamer.");
                 } else {
-                    // Geen kamers meer, ga terug naar lobby
                     cleaner.state = CleanerState.WALKING_BACK;
                     sendCleanerToLobby(cleaner);
                     if (logPanel != null) logPanel.addLog("✅ Schoonmaker klaar! Gaat terug.");
@@ -82,16 +76,12 @@ public class CleanerController {
             }
         }
 
-        // Nodig voor als de schoonmaker al IDLE is wanneer een nieuwe kamer binnenkomt
         if (cleaner.state == CleanerState.IDLE && !cleaner.dirtyRooms.isEmpty()) {
             int nextRoomId = cleaner.dirtyRooms.remove(0);
             assignCleanerToRoom(cleaner, nextRoomId);
         }
     }
 
-    /**
-     * Stuurt de schoonmaker naar een specifieke kamer om deze schoon te maken.
-     */
     private void assignCleanerToRoom(Cleaner cleaner, int roomId) {
         for (int i = 0; i < data.areas.size(); i++) {
             Area a = data.areas.get(i);
@@ -109,9 +99,6 @@ public class CleanerController {
         }
     }
 
-    /**
-     * Stuurt de schoonmaker terug naar de lobby.
-     */
     private void sendCleanerToLobby(Cleaner cleaner) {
         for (int i = 0; i < data.areas.size(); i++) {
             Area a = data.areas.get(i);
