@@ -21,6 +21,8 @@ public class Elevator {
     private int waitTicksRemaining = 0;
     private int lastArrivedFloor = -1;
 
+
+
     public Elevator(double startX, double startY) {
         this(startX, startY, 60);
     }

@@ -59,7 +59,8 @@ public class GuestMover {
                 } else {
                     g.x = elevatorX;
                     g.state = GuestState.IN_QUEUE;
-                    g.elevatorWaitTimer = 0; // reset timer bij instappen wachtrij
+                    g.elevatorWaitTimer = 0;
+                    g.waitingOnFloor = currentFloorY; // sla verdieping op bij het instappen van de wachtrij
                     data.elevator.waitingGuests.add(g);
                 }
             }
