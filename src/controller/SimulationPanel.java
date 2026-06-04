@@ -20,24 +20,28 @@ public class SimulationPanel extends JPanel {
 
     private TimeControlPanel timeControlPanel;
 
+    // GEFIXT: De constructor accepteert nu de 3 extra parameters die SimulationData nodig heeft
     public SimulationPanel(
             List<Area> areas,
             int capacity,
             int cleaningSeconds,
+            int extraParam1, // TODO: Kijk in SimulationData.java hoe deze 3 ints heten (bijv. elevatorCapacity, etc.)
+            int extraParam2,
+            int extraParam3,
             int selectedScenario
     ) {
 
-        // Simulatie data
-        this.data = new SimulationData(areas, capacity, cleaningSeconds);
+        // 1. Simulatie data initialiseren (GEFIXT: Nu met alle 5 de vereiste ints)
+        this.data = new SimulationData(areas, capacity, cleaningSeconds, extraParam1, extraParam2, extraParam3);
 
-        // Renderer
-        this.renderer = new SimulationRenderer(data);
-
-        // Log scherm
+        // 2. Log scherm initialiseren
         this.logPanel = new LogPanel();
 
-        // Controller
+        // 3. Controller initialiseren
         this.controller = new SimulationController(data, logPanel, selectedScenario);
+
+        // 4. Renderer initialiseren (met de cleanerController koppeling voor de twee schoonmakers)
+        this.renderer = new SimulationRenderer(data, controller.getCleanerController());
 
         // HTE
         this.hte = new HotelTimeEngine();
