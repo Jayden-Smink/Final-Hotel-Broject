@@ -36,24 +36,47 @@ public class CleanerController {
     public void handleCleaningEmergency(int roomId) {
         if (data.cleaners.isEmpty()) return;
 
-        // 1. Zoek de schoonmaker die het minst druk is (kortste wachtrij)
-        Cleaner bestWorker = null;
-        for (Cleaner worker : data.cleaners.values()) {
-            if (bestWorker == null || worker.dirtyRooms.size() < bestWorker.dirtyRooms.size()) {
-                bestWorker = worker;
+        // Zoek een kamer om schoon te maken via de eigen areas lijst
+        // (event roomId komt uit het scenario en matcht niet met interne Area IDs)
+        int targetRoomId = -1;
+        for (int i = 0; i < data.areas.size(); i++) {
+            Area a = data.areas.get(i);
+            if (a.AreaType.equalsIgnoreCase("ROOM")) {
+                targetRoomId = a.id;
+                break;
             }
         }
 
-        // 2. Wijs de specifieke kamer toe aan de minst drukke schoonmaker
-        if (bestWorker != null) {
-            if (bestWorker.state == CleanerState.IDLE) {
-                assignCleanerToRoom(bestWorker, roomId);
-            } else {
-                bestWorker.dirtyRooms.add(roomId);
+        if (targetRoomId == -1) return;
+
+        // Geef voorkeur aan een IDLE schoonmaker
+        Cleaner bestWorker = null;
+        for (Cleaner worker : data.cleaners.values()) {
+            if (worker.state == CleanerState.IDLE) {
+                bestWorker = worker;
+                break;
             }
-            if (logPanel != null) {
-                logPanel.addLog("🚨 Noodgeval! Kamer " + roomId + " toegewezen aan schoonmaker " + bestWorker.id);
+        }
+
+        // Niemand IDLE? Pak degene met de kortste wachtrij
+        if (bestWorker == null) {
+            for (Cleaner worker : data.cleaners.values()) {
+                if (bestWorker == null || worker.dirtyRooms.size() < bestWorker.dirtyRooms.size()) {
+                    bestWorker = worker;
+                }
             }
+        }
+
+        if (bestWorker == null) return;
+
+        if (bestWorker.state == CleanerState.IDLE) {
+            assignCleanerToRoom(bestWorker, targetRoomId);
+        } else {
+            bestWorker.dirtyRooms.add(targetRoomId);
+        }
+
+        if (logPanel != null) {
+            logPanel.addLog("🚨 Noodgeval! Schoonmaker " + bestWorker.id + " gestuurd naar kamer " + targetRoomId);
         }
     }
 
