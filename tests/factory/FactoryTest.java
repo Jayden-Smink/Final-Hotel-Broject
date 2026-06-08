@@ -8,39 +8,56 @@ import static org.junit.jupiter.api.Assertions.*;
 class PersonFactoryTest {
 
     @Test
-    void createGuest_returnsGuestInstance() {
-        assertInstanceOf(Guest.class, PersonFactory.createGuest(PersonType.GUEST, 1, 0, 0));
+    void createPerson_guest_returnsGuestInstance() {
+        assertInstanceOf(Guest.class, PersonFactory.createPerson(PersonType.GUEST, 1, 0, 0));
     }
 
     @Test
-    void createGuest_setsCorrectId() {
-        Guest g = PersonFactory.createGuest(PersonType.GUEST, 42, 0, 0);
-        assertEquals(42, g.id);
+    void createPerson_guest_setsCorrectId() {
+        Person p = PersonFactory.createPerson(PersonType.GUEST, 42, 0, 0);
+        assertEquals(42, p.id);
     }
 
     @Test
-    void createGuest_setsInitialX() {
-        Guest g = PersonFactory.createGuest(PersonType.GUEST, 1, 100, 200);
-        assertEquals(100.0, g.x, 0.001);
+    void createPerson_guest_setsInitialX() {
+        Person p = PersonFactory.createPerson(PersonType.GUEST, 1, 100, 200);
+        assertEquals(100.0, p.x, 0.001);
     }
 
     @Test
-    void createGuest_setsInitialY() {
-        Guest g = PersonFactory.createGuest(PersonType.GUEST, 1, 100, 200);
-        assertEquals(200.0, g.y, 0.001);
+    void createPerson_guest_setsInitialY() {
+        Person p = PersonFactory.createPerson(PersonType.GUEST, 1, 100, 200);
+        assertEquals(200.0, p.y, 0.001);
     }
 
     @Test
-    void createGuest_initialStateIsWalking() {
-        Guest g = PersonFactory.createGuest(PersonType.GUEST, 1, 0, 0);
+    void createPerson_guest_initialStateIsWalking() {
+        Guest g = (Guest) PersonFactory.createPerson(PersonType.GUEST, 1, 0, 0);
         assertEquals(GuestState.WALKING, g.state);
     }
 
     @Test
-    void createGuest_multipleCallsReturnDistinctInstances() {
-        Guest g1 = PersonFactory.createGuest(PersonType.GUEST, 1, 0, 0);
-        Guest g2 = PersonFactory.createGuest(PersonType.GUEST, 2, 0, 0);
-        assertNotSame(g1, g2);
+    void createPerson_cleaner_returnsCleanerInstance() {
+        assertInstanceOf(Cleaner.class, PersonFactory.createPerson(PersonType.CLEANER, 1, 0, 0));
+    }
+
+    @Test
+    void createPerson_cleaner_initialStateIsIdle() {
+        Cleaner c = (Cleaner) PersonFactory.createPerson(PersonType.CLEANER, 1, 0, 0);
+        assertEquals(CleanerState.IDLE, c.state);
+    }
+
+    @Test
+    void createPerson_multipleCallsReturnDistinctInstances() {
+        Person p1 = PersonFactory.createPerson(PersonType.GUEST, 1, 0, 0);
+        Person p2 = PersonFactory.createPerson(PersonType.GUEST, 2, 0, 0);
+        assertNotSame(p1, p2);
+    }
+
+    @Test
+    void createPerson_nullType_throwsException() {
+        assertThrows(RuntimeException.class,
+                () -> PersonFactory.createPerson(null, 1, 0, 0));
     }
 }
 
