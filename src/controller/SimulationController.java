@@ -6,59 +6,42 @@ import hotelevents.HotelEventManager;
 import model.*;
 import view.LogPanel;
 
-/**
- * De centrale controller van de simulatie. Deze klasse luistert naar hotel-events
- * (Observer Pattern) en stuurt bij elke klokslag alle sub-controllers aan.
- */
 public class SimulationController implements HotelEventListener {
 
     private final SimulationData data;
 
-    // De sub-controllers die elk een specifiek onderdeel van het hotel beheren
     private final ElevatorController elevatorController;
     private final ReceptionistController receptionistController;
     private final GuestController guestController;
     private final GuestActivityController guestActivityController;
 
     private final LogPanel logPanel;
-    private final HotelEventManager eventManager; // We maken de variabele hier weer netjes aan
+    private final HotelEventManager eventManager;
     private final CleanerController cleanerController;
 
     public SimulationController(SimulationData data, LogPanel logPanel, int selectedScenario) {
-
         this.data = data;
         this.logPanel = logPanel;
 
-        // 1. Initialiseer de sub-controllers
         this.elevatorController = new ElevatorController(data, logPanel);
         this.receptionistController = new ReceptionistController(data, logPanel);
         this.guestController = new GuestController(data, logPanel, this.receptionistController);
         this.guestActivityController = new GuestActivityController(data, receptionistController, logPanel);
         this.cleanerController = new CleanerController(data, logPanel);
 
-        // GEFIXT: We maken de instantie weer aan via 'new' om de non-static error op te lossen
         this.eventManager = new HotelEventManager();
         this.eventManager.register(this);
 
-        // Start het gekozen scenario via de gemaakte instantie
         System.out.println("Gestart scenario: " + selectedScenario);
         this.eventManager.start(selectedScenario);
     }
 
-    /**
-     * OBSERVER PATTERN - Vangt binnenkomende gebeurtenissen op vanuit de HotelEventManager.
-     */
     @Override
     public void notify(HotelEvent event) {
-
-        // Handel het event af op basis van het type (EventType)
         switch (event.getEventType()) {
 
             case CHECK_IN:
-                guestController.processCheckIn(
-                        event.getGuestId(),
-                        event.getData()
-                );
+                guestController.processCheckIn(event.getGuestId(), event.getData());
                 break;
 
             case CHECK_OUT:
@@ -67,17 +50,17 @@ public class SimulationController implements HotelEventListener {
                 if (leavingGuest != null) {
                     leavingGuest.isCheckingOut = true;
 
-                    data.areas.stream()
-                            .filter(a -> a.AreaType.equalsIgnoreCase("LOBBY"))
-                            .findFirst()
-                            .ifPresent(lobby -> {
-                                double exitY = (lobby.getPos()[1] * data.tileSize) + data.tileSize / 2.0;
-                                leavingGuest.setTarget(20.0, exitY);
-                            });
-
-                    if (logPanel != null) {
-                        logPanel.addLog("🚪 Gast " + leavingGuest.id + " checkt uit.");
+                    // Zoek de lobby zonder stream
+                    for (int i = 0; i < data.areas.size(); i++) {
+                        Area a = data.areas.get(i);
+                        if (a.AreaType.equalsIgnoreCase("LOBBY")) {
+                            double exitY = (a.getPos()[1] * data.tileSize) + data.tileSize / 2.0;
+                            leavingGuest.setTarget(20.0, exitY);
+                            break;
+                        }
                     }
+
+                    if (logPanel != null) logPanel.addLog("🚪 Gast " + leavingGuest.id + " checkt uit.");
                 }
                 break;
 
@@ -94,13 +77,9 @@ public class SimulationController implements HotelEventListener {
                 break;
 
             case CLEANING_EMERGENCY:
-                // GEFIXT: event.getData() is al een int. Geen parseInt-fouten of crashes meer!
                 int roomId = event.getData();
                 cleanerController.handleCleaningEmergency(roomId);
-
-                if (logPanel != null) {
-                    logPanel.addLog("🧹 Cleaning emergency in kamer " + roomId + "!");
-                }
+                if (logPanel != null) logPanel.addLog("🧹 Cleaning emergency in kamer " + roomId + "!");
                 break;
 
             case EVACUATE:
@@ -121,9 +100,6 @@ public class SimulationController implements HotelEventListener {
         }
     }
 
-    /**
-     * MAIN GAME LOOP
-     */
     public void updateTick() {
         guestController.update();
         elevatorController.update();

@@ -35,7 +35,6 @@ public class SimulationPanel extends JPanel {
             int restaurantDurationSeconds,
             int fitnessDurationSeconds
     ) {
-        // 1. Simulatie data initialiseren
         this.data = new SimulationData(
                 areas,
                 capacity,
@@ -48,28 +47,31 @@ public class SimulationPanel extends JPanel {
         this.data.numberOfCleaners = cleanerCount;
         this.logPanel = new LogPanel();
 
-        // 2. Controller & Renderer initialiseren
         this.controller = new SimulationController(data, logPanel, selectedScenario);
         this.renderer = new SimulationRenderer(data, controller.getCleanerController());
 
-        // 3. Schoonmakers dynamisch spawnen in de lobby
-        this.data.areas.stream()
-                .filter(a -> a.AreaType.equalsIgnoreCase("LOBBY"))
-                .findFirst()
-                .ifPresent(lobby -> {
-                    double lobbyX = (lobby.getPos()[0] * data.tileSize) + data.horizontalOffset + ((lobby.getDim()[0] * data.tileSize) / 2.0);
-                    double lobbyY = (lobby.getPos()[1] * data.tileSize) + 25.0;
+        // Zoek de lobby en spawn schoonmakers
+        Area lobbyArea = null;
+        for (int i = 0; i < this.data.areas.size(); i++) {
+            if (this.data.areas.get(i).AreaType.equalsIgnoreCase("LOBBY")) {
+                lobbyArea = this.data.areas.get(i);
+                break;
+            }
+        }
 
-                    for (int i = 1; i <= data.numberOfCleaners; i++) {
-                        Cleaner cleaner = (Cleaner) PersonFactory.createPerson(PersonType.CLEANER, i, lobbyX, lobbyY);
-                        cleaner.speed = 2.0;
-                        cleaner.setTarget(lobbyX, lobbyY);
-                        cleaner.state = CleanerState.IDLE;
-                        data.cleaners.put(cleaner.id, cleaner);
-                    }
-                });
+        if (lobbyArea != null) {
+            double lobbyX = (lobbyArea.getPos()[0] * data.tileSize) + data.horizontalOffset + ((lobbyArea.getDim()[0] * data.tileSize) / 2.0);
+            double lobbyY = (lobbyArea.getPos()[1] * data.tileSize) + 25.0;
 
-        // 4. HTE & Layout opbouwen
+            for (int i = 1; i <= data.numberOfCleaners; i++) {
+                Cleaner cleaner = (Cleaner) PersonFactory.createPerson(PersonType.CLEANER, i, lobbyX, lobbyY);
+                cleaner.speed = 2.0;
+                cleaner.setTarget(lobbyX, lobbyY);
+                cleaner.state = CleanerState.IDLE;
+                data.cleaners.put(cleaner.id, cleaner);
+            }
+        }
+
         this.hte = new HotelTimeEngine();
 
         setLayout(new BorderLayout());
@@ -84,7 +86,6 @@ public class SimulationPanel extends JPanel {
 
         simulationView.setPreferredSize(new Dimension(900, 2000));
 
-        // Lobby klik detectie
         simulationView.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
@@ -97,28 +98,22 @@ public class SimulationPanel extends JPanel {
         JScrollPane scrollPane = new JScrollPane(simulationView);
         scrollPane.getVerticalScrollBar().setUnitIncrement(16);
 
-        JSplitPane splitPane =
-                new JSplitPane(
-                        JSplitPane.HORIZONTAL_SPLIT,
-                        scrollPane,
-                        logPanel
-                );
+        JSplitPane splitPane = new JSplitPane(
+                JSplitPane.HORIZONTAL_SPLIT,
+                scrollPane,
+                logPanel
+        );
 
         splitPane.setResizeWeight(1.0);
         splitPane.setDividerSize(6);
         splitPane.setContinuousLayout(true);
 
-        SwingUtilities.invokeLater(() ->
-                splitPane.setDividerLocation(0.75)
-        );
+        SwingUtilities.invokeLater(() -> splitPane.setDividerLocation(0.75));
 
         add(splitPane, BorderLayout.CENTER);
 
-        // Game loop starten
         GameLoop gameLoop = new GameLoop(controller, hte, () -> {
-            if (timeControlPanel != null) {
-                timeControlPanel.refresh();
-            }
+            if (timeControlPanel != null) timeControlPanel.refresh();
             repaint();
         });
 
