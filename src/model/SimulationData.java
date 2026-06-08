@@ -21,10 +21,10 @@ public class SimulationData {
         this.cleanerSettings = new CleanerSettings(cleaningSeconds);
         this.guestSettings = new GuestSettings(15);
 
-        // Zoek de onderste verdieping via een gewone for loop
         int bottomFloor = 0;
         for (int i = 0; i < areas.size(); i++) {
-            int floorY = areas.get(i).getPos()[1];
+            Area area = areas.get(i);
+            int floorY = area.getPos()[1];
             if (floorY > bottomFloor) {
                 bottomFloor = floorY;
             }

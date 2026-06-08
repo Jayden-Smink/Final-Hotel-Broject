@@ -19,30 +19,26 @@ public class CleanerController {
     private final int tileSize = 60;
     private final int horizontalOffset = 60;
 
-    // SRP Verbetering: Gekoppeld aan de specifieke CleanerMover
     private final CleanerMover cleanerMover;
 
     public CleanerController(SimulationData data, LogPanel logPanel) {
         this.data = data;
         this.logPanel = logPanel;
-
-        // We geven direct de StairModel mee aan de CleanerMover constructor
         this.cleanerMover = new CleanerMover(data, new StairModel(data.areas));
     }
 
     /**
-     * Vangt een noodgeval op en verdeelt de kamer over de schoonmaker met de minste taken.
+     * Vangt een noodgeval op en stuurt de meest geschikte schoonmaker naar een kamer.
      */
     public void handleCleaningEmergency(int roomId) {
         if (data.cleaners.isEmpty()) return;
 
         // Zoek een kamer om schoon te maken via de eigen areas lijst
-        // (event roomId komt uit het scenario en matcht niet met interne Area IDs)
         int targetRoomId = -1;
         for (int i = 0; i < data.areas.size(); i++) {
-            Area a = data.areas.get(i);
-            if (a.AreaType.equalsIgnoreCase("ROOM")) {
-                targetRoomId = a.id;
+            Area area = data.areas.get(i);
+            if (area.AreaType.equalsIgnoreCase("ROOM")) {
+                targetRoomId = area.id;
                 break;
             }
         }
@@ -84,20 +80,15 @@ public class CleanerController {
      * De hoofd-update loop stuurt alle schoonmakers frame-by-frame aan.
      */
     public void update() {
-        // We loopen direct onafhankelijk door alle actieve schoonmakers uit data.cleaners
         for (Cleaner worker : data.cleaners.values()) {
-
-            // Roep de mover aan om de posities te berekenen voor deze specifieke werknemer
             cleanerMover.moveCleaner(worker);
 
-            // --- Status logica per schoonmaker ---
             if (worker.state == CleanerState.CLEANING) {
                 worker.cleaningTimer++;
 
                 if (worker.cleaningTimer >= data.cleanerSettings.getCleaningDurationFrames()) {
                     worker.cleaningTimer = 0;
 
-                    // Pak de eerstvolgende taak uit de EIGEN wachtrij van deze schoonmaker
                     if (!worker.dirtyRooms.isEmpty()) {
                         int nextRoomId = worker.dirtyRooms.remove(0);
                         assignCleanerToRoom(worker, nextRoomId);
@@ -110,7 +101,6 @@ public class CleanerController {
                 }
             }
 
-            // Check of deze specifieke schoonmaker zijn doel heeft bereikt
             if (Math.abs(worker.x - worker.targetX) < 5 && Math.abs(worker.y - worker.targetY) < 5) {
                 if (worker.state == CleanerState.WALKING_TO_ROOM) {
                     worker.state = CleanerState.CLEANING;
@@ -121,7 +111,6 @@ public class CleanerController {
                 }
             }
 
-            // Als de schoonmaker niks te doen heeft, maar er staan wel kamers in zijn wachtrij: gaan!
             if (worker.state == CleanerState.IDLE && !worker.dirtyRooms.isEmpty()) {
                 int nextRoomId = worker.dirtyRooms.remove(0);
                 assignCleanerToRoom(worker, nextRoomId);
@@ -131,16 +120,16 @@ public class CleanerController {
 
     private void assignCleanerToRoom(Cleaner cleaner, int roomId) {
         for (int i = 0; i < data.areas.size(); i++) {
-            Area a = data.areas.get(i);
-            if (a.id == roomId && a.AreaType.equalsIgnoreCase("ROOM")) {
-                cleaner.assignedRoomId = a.id;
+            Area area = data.areas.get(i);
+            if (area.id == roomId && area.AreaType.equalsIgnoreCase("ROOM")) {
+                cleaner.assignedRoomId = area.id;
                 cleaner.state = CleanerState.WALKING_TO_ROOM;
 
-                double tx = (a.getPos()[0] * tileSize) + horizontalOffset + (a.getDim()[0] * tileSize / 2.0);
-                double ty = (a.getPos()[1] * tileSize) + 25.0;
-                cleaner.setTarget(tx, ty);
+                double targetX = (area.getPos()[0] * tileSize) + horizontalOffset + (area.getDim()[0] * tileSize / 2.0);
+                double targetY = (area.getPos()[1] * tileSize) + 25.0;
+                cleaner.setTarget(targetX, targetY);
 
-                if (logPanel != null) logPanel.addLog("🧹 Schoonmaker " + cleaner.id + " gaat naar kamer " + a.id + " op verdieping " + a.getPos()[1]);
+                if (logPanel != null) logPanel.addLog("🧹 Schoonmaker " + cleaner.id + " gaat naar kamer " + area.id + " op verdieping " + area.getPos()[1]);
                 return;
             }
         }
@@ -148,19 +137,16 @@ public class CleanerController {
 
     private void sendCleanerToLobby(Cleaner cleaner) {
         for (int i = 0; i < data.areas.size(); i++) {
-            Area a = data.areas.get(i);
-            if (a.AreaType.equalsIgnoreCase("LOBBY")) {
-                double tx = (a.getPos()[0] * tileSize) + horizontalOffset + ((a.getDim()[0] * tileSize) / 2.0);
-                double ty = (a.getPos()[1] * tileSize) + 25.0;
-                cleaner.setTarget(tx, ty);
+            Area area = data.areas.get(i);
+            if (area.AreaType.equalsIgnoreCase("LOBBY")) {
+                double targetX = (area.getPos()[0] * tileSize) + horizontalOffset + ((area.getDim()[0] * tileSize) / 2.0);
+                double targetY = (area.getPos()[1] * tileSize) + 25.0;
+                cleaner.setTarget(targetX, targetY);
                 return;
             }
         }
     }
 
-    /**
-     * Geeft de lijst met actieve schoonmakers terug ten behoeve van de rendering/view laag.
-     */
     public List<Cleaner> getActiveCleaners() {
         return new ArrayList<>(data.cleaners.values());
     }

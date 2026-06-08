@@ -1,6 +1,6 @@
 package view;
 
-import controller.CleanerController; // NIEUWE IMPORT
+import controller.CleanerController;
 import model.*;
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -13,24 +13,10 @@ import model.CleanerState;
 
 public class SimulationRenderer {
     private final SimulationData data;
-    private final CleanerController cleanerController; // KOPPELING: Nu hebben we toegang tot de pool!
+    private final CleanerController cleanerController;
 
     private final Map<String, BufferedImage> assetCache = new HashMap<>();
 
-    // Area types that get the occupied overlay and guest count badge
-    private static final Set<String> ACTIVITY_AREAS = Set.of(
-            "ROOM", "RESTAURANT", "CINEMA", "FITNESS", "RECEPTION"
-    );
-
-    /*
-     * Deze areas worden NA de elevator getekend.
-     * Daardoor liggen ze visueel bovenop de elevator.
-     */
-    private static final Set<String> FRONT_LAYER_AREAS = Set.of(
-            "LOBBY", "RECEPTION"
-    );
-
-    // AANPASSING: De constructor verwacht nu ook de cleanerController
     public SimulationRenderer(SimulationData data, CleanerController cleanerController) {
         loadAssets();
         this.data = data;
@@ -44,7 +30,8 @@ public class SimulationRenderer {
                 "BACKROOMS"
         };
 
-        for (String type : typesToLoad) {
+        for (int i = 0; i < typesToLoad.length; i++) {
+            String type = typesToLoad[i];
             try {
                 File file = new File("src/view/Picture/" + type.toLowerCase() + ".png");
                 if (file.exists()) {
@@ -63,31 +50,22 @@ public class SimulationRenderer {
         g2.setColor(new Color(30, 30, 30));
         g2.fillRect(0, 0, 2000, 2000);
 
-        // 1. Teken alle areas behalve LOBBY en RECEPTION
         drawAreas(g2, data, false);
-
-        // 2. Teken elevator
         drawElevator(g2, data);
-
-        // 3. Teken LOBBY en RECEPTION bovenop de elevator
         drawAreas(g2, data, true);
-
-        // 4. Teken gasten
         drawGuests(g2, data);
-
-        // 5. Teken schoonmakers (NU MEERVOUD)
         drawCleaners(g2);
     }
 
     private void drawAreas(Graphics2D g2, SimulationData data, boolean frontLayerOnly) {
         if (data.areas == null) return;
 
-        for (Area a : data.areas) {
-            boolean isFrontLayer = FRONT_LAYER_AREAS.contains(a.AreaType.toUpperCase());
-
+        for (int i = 0; i < data.areas.size(); i++) {
+            Area area = data.areas.get(i);
+            boolean isFrontLayer = isFrontLayerArea(area.AreaType);
             if (frontLayerOnly == isFrontLayer) {
-                int count = countGuests(a, data.guests);
-                drawArea(g2, a, count);
+                int guestCount = countGuests(area, data.guests);
+                drawArea(g2, area, guestCount);
             }
         }
     }
@@ -98,13 +76,13 @@ public class SimulationRenderer {
         BufferedImage elevatorImg = assetCache.get("ELEVATOR");
         int elevatorWidth = 46;
         int elevatorX = data.horizontalOffset + (data.tileSize / 2) - (elevatorWidth / 2);
-        int curY = (int) data.elevator.curY;
+        int elevatorY = (int) data.elevator.curY;
 
         if (elevatorImg != null) {
-            g2.drawImage(elevatorImg, elevatorX, curY, elevatorWidth, data.tileSize - 10, null);
+            g2.drawImage(elevatorImg, elevatorX, elevatorY, elevatorWidth, data.tileSize - 10, null);
         } else {
             g2.setColor(new Color(60, 120, 255));
-            g2.fillRoundRect(elevatorX, curY, elevatorWidth, data.tileSize - 10, 10, 10);
+            g2.fillRoundRect(elevatorX, elevatorY, elevatorWidth, data.tileSize - 10, 10, 10);
         }
     }
 
@@ -116,77 +94,71 @@ public class SimulationRenderer {
             guestSnapshot = new ArrayList<>(data.guests.values());
         }
 
-        for (Guest g : guestSnapshot) {
-            if (g.state != GuestState.IN_LIFT) {
-                GuestRenderer.draw(g2, g, data.horizontalOffset);
+        for (int i = 0; i < guestSnapshot.size(); i++) {
+            Guest guest = guestSnapshot.get(i);
+            if (guest.state != GuestState.IN_LIFT) {
+                GuestRenderer.draw(g2, guest, data.horizontalOffset);
             }
         }
     }
 
-    // GEFIXT: Loopt nu door alle schoonmakers uit de pool heen!
     private void drawCleaners(Graphics2D g2) {
         if (cleanerController == null) return;
 
-        for (Cleaner cleaner : cleanerController.getActiveCleaners()) {
-            // Als de schoonmaker in een kamer aan het poetsen is, verbergen we de stip (de kamer wordt immers al groen)
+        List<Cleaner> cleaners = cleanerController.getActiveCleaners();
+        for (int i = 0; i < cleaners.size(); i++) {
+            Cleaner cleaner = cleaners.get(i);
             if (cleaner.state == CleanerState.CLEANING) continue;
 
             int drawX = (int) cleaner.x + data.horizontalOffset;
             int drawY = (int) cleaner.y;
 
-            // Teken de groene stip voor de schoonmaker
             g2.setColor(new Color(50, 205, 50));
             g2.fillOval(drawX - 10, drawY - 10, 20, 20);
 
-            // Teken "C1", "C2", etc. boven de stip zodat je ziet wie wie is
             g2.setColor(Color.WHITE);
             g2.setFont(new Font("Arial", Font.BOLD, 11));
             g2.drawString("C" + cleaner.id, drawX - 6, drawY - 12);
         }
     }
 
-    /**
-     * Telt het aantal gasten (IDLE) binnen de grenzen van deze area.
-     */
-    private int countGuests(Area a, Map<Integer, Guest> guests) {
+    private int countGuests(Area area, Map<Integer, Guest> guests) {
         if (guests == null) return 0;
 
-        int areaX = a.getPos()[0] * data.tileSize;
-        int areaY = a.getPos()[1] * data.tileSize;
-        int areaW = a.getDim()[0] * data.tileSize;
-        int areaH = a.getDim()[1] * data.tileSize;
+        int areaX = area.getPos()[0] * data.tileSize;
+        int areaY = area.getPos()[1] * data.tileSize;
+        int areaW = area.getDim()[0] * data.tileSize;
+        int areaH = area.getDim()[1] * data.tileSize;
 
-        return (int) guests.values().stream().filter(g ->
-                g.state == GuestState.IDLE &&
-                        g.x >= areaX - 10 &&
-                        g.x <= areaX + areaW + 10 &&
-                        g.y >= areaY &&
-                        g.y <= areaY + areaH
-        ).count();
+        int count = 0;
+        for (Guest guest : guests.values()) {
+            if (guest.state == GuestState.IDLE &&
+                    guest.x >= areaX - 10 &&
+                    guest.x <= areaX + areaW + 10 &&
+                    guest.y >= areaY &&
+                    guest.y <= areaY + areaH) {
+                count++;
+            }
+        }
+        return count;
     }
 
-    private void drawArea(Graphics2D g2, Area a, int guestCount) {
-        int[] pos = a.getPos();
-        int[] dim = a.getDim();
+    private void drawArea(Graphics2D g2, Area area, int guestCount) {
+        int[] pos = area.getPos();
+        int[] dim = area.getDim();
 
         int x = (pos[0] * data.tileSize) + data.horizontalOffset;
         int y = pos[1] * data.tileSize;
         int w = dim[0] * data.tileSize;
         int h = dim[1] * data.tileSize;
 
-        String assetKey = a.AreaType.toUpperCase();
-
+        String assetKey = area.AreaType.toUpperCase();
         if (assetKey.contains("SCHACHT")) assetKey = "ELEVATOR-SHAFT";
-        if (assetKey.contains("TRAP")) assetKey = "STAIRS";
+        if (assetKey.contains("TRAP"))    assetKey = "STAIRS";
 
         BufferedImage img = assetCache.get(assetKey);
 
-        /*
-         * Als LOBBY of RECEPTION transparante pixels heeft,
-         * kan de elevator anders nog zichtbaar blijven.
-         * Daarom tekenen we eerst een donkere basislaag.
-         */
-        if (FRONT_LAYER_AREAS.contains(a.AreaType.toUpperCase())) {
+        if (isFrontLayerArea(area.AreaType)) {
             g2.setColor(new Color(30, 30, 30));
             g2.fillRect(x, y, w, h);
         }
@@ -194,21 +166,14 @@ public class SimulationRenderer {
         if (img != null) {
             g2.drawImage(img, x, y, w, h, null);
         } else {
-            if (assetKey.equals("RECEPTION")) {
-                g2.setColor(new Color(255, 218, 170));
-            } else if (assetKey.equals("LOBBY")) {
-                g2.setColor(new Color(45, 45, 45));
-            } else if (assetKey.equals("BACKROOMS")) {
-                g2.setColor(new Color(75, 70, 45));
-            } else {
-                g2.setColor(Color.DARK_GRAY);
-            }
-
+            if      (assetKey.equals("RECEPTION")) g2.setColor(new Color(255, 218, 170));
+            else if (assetKey.equals("LOBBY"))     g2.setColor(new Color(45, 45, 45));
+            else if (assetKey.equals("BACKROOMS")) g2.setColor(new Color(75, 70, 45));
+            else                                   g2.setColor(Color.DARK_GRAY);
             g2.fillRect(x, y, w, h);
         }
 
-        // Rood transparant overlay voor bezette activiteitsruimtes
-        if (guestCount > 0 && ACTIVITY_AREAS.contains(a.AreaType.toUpperCase())) {
+        if (guestCount > 0 && isActivityArea(area.AreaType)) {
             Composite original = g2.getComposite();
             g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.35f));
             g2.setColor(new Color(220, 50, 50));
@@ -216,34 +181,30 @@ public class SimulationRenderer {
             g2.setComposite(original);
         }
 
-        // Label
         g2.setFont(new Font("Arial", Font.BOLD, 10));
         g2.setColor(new Color(255, 255, 255, 120));
-        g2.drawString(a.AreaType, x + 5, y + 15);
+        g2.drawString(area.AreaType, x + 5, y + 15);
 
-        // Gast-telbadge rechtsbovenhoek, alleen voor activiteitsruimtes
-        if (ACTIVITY_AREAS.contains(a.AreaType.toUpperCase())) {
+        if (isActivityArea(area.AreaType)) {
             drawGuestCountBadge(g2, x, y, w, guestCount);
         }
 
-        // GEFIXT: Groene overlay — Kamer wordt nu groen als EEN VAN DE schoonmakers hier poetst
         if (cleanerController != null) {
-            for (Cleaner cleaner : cleanerController.getActiveCleaners()) {
-                if (cleaner.assignedRoomId == a.id && cleaner.state == CleanerState.CLEANING) {
+            List<Cleaner> cleaners = cleanerController.getActiveCleaners();
+            for (int i = 0; i < cleaners.size(); i++) {
+                Cleaner cleaner = cleaners.get(i);
+                if (cleaner.assignedRoomId == area.id && cleaner.state == CleanerState.CLEANING) {
                     Composite original = g2.getComposite();
                     g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.35f));
                     g2.setColor(new Color(50, 220, 50));
                     g2.fillRect(x, y, w, h);
                     g2.setComposite(original);
-                    break; // Eén groene overlay is genoeg als er gepoetst wordt
+                    break;
                 }
             }
         }
     }
 
-    /**
-     * Tekent een klein badge-cirkel met het aantal gasten in de rechterbovenhoek van de area.
-     */
     private void drawGuestCountBadge(Graphics2D g2, int x, int y, int w, int guestCount) {
         String text = String.valueOf(guestCount);
 
@@ -251,7 +212,6 @@ public class SimulationRenderer {
         int badgeX = x + w - badgeSize - 4;
         int badgeY = y + 4;
 
-        // Achtergrond: donker met lichte rand
         g2.setColor(new Color(20, 20, 20, 200));
         g2.fillOval(badgeX, badgeY, badgeSize, badgeSize);
 
@@ -259,7 +219,6 @@ public class SimulationRenderer {
         g2.setStroke(new BasicStroke(1f));
         g2.drawOval(badgeX, badgeY, badgeSize, badgeSize);
 
-        // Getal
         g2.setFont(new Font("Arial", Font.BOLD, 11));
         FontMetrics fm = g2.getFontMetrics();
 
@@ -268,5 +227,15 @@ public class SimulationRenderer {
 
         g2.setColor(Color.WHITE);
         g2.drawString(text, textX, textY);
+    }
+
+    private boolean isActivityArea(String type) {
+        String upperType = type.toUpperCase();
+        return upperType.equals("ROOM") || upperType.equals("RESTAURANT") || upperType.equals("CINEMA") || upperType.equals("FITNESS") || upperType.equals("RECEPTION");
+    }
+
+    private boolean isFrontLayerArea(String type) {
+        String upperType = type.toUpperCase();
+        return upperType.equals("LOBBY") || upperType.equals("RECEPTION");
     }
 }

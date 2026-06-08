@@ -18,7 +18,6 @@ public class ElevatorController {
 
         elevator.update();
 
-        // Update wachttimers en verwijder gasten die te lang wachten
         updateWaitTimers(elevator);
 
         if (!elevator.isMoving) {
@@ -26,24 +25,24 @@ public class ElevatorController {
 
             // Laat passagiers uitstappen op de juiste verdieping
             for (int i = elevator.passengers.size() - 1; i >= 0; i--) {
-                Guest g = elevator.passengers.get(i);
-                int targetFloorY = (int) (g.targetY / data.tileSize);
+                Guest passenger = elevator.passengers.get(i);
+                int targetFloorY = (int) (passenger.targetY / data.tileSize);
                 if (targetFloorY == currentFloorY) {
                     elevator.passengers.remove(i);
-                    g.state = GuestState.EXITING_LIFT;
-                    g.x = elevator.curX + data.tileSize;
+                    passenger.state = GuestState.EXITING_LIFT;
+                    passenger.x = elevator.curX + data.tileSize;
                 }
             }
 
             // Laat wachtende gasten op de huidige verdieping instappen
             for (int i = elevator.waitingGuests.size() - 1; i >= 0; i--) {
                 if (elevator.passengers.size() >= elevator.maxCapacity) break;
-                Guest g = elevator.waitingGuests.get(i);
-                if (g.waitingOnFloor == currentFloorY) {
+                Guest waitingGuest = elevator.waitingGuests.get(i);
+                if (waitingGuest.waitingOnFloor == currentFloorY) {
                     elevator.waitingGuests.remove(i);
-                    g.elevatorWaitTimer = 0;
-                    g.state = GuestState.IN_LIFT;
-                    elevator.passengers.add(g);
+                    waitingGuest.elevatorWaitTimer = 0;
+                    waitingGuest.state = GuestState.IN_LIFT;
+                    elevator.passengers.add(waitingGuest);
                 }
             }
 
@@ -51,19 +50,18 @@ public class ElevatorController {
         }
     }
 
-    // Hoog de wachttimer op van elke wachtende gast. Geeft op na ELEVATOR_WAIT_TIMEOUT frames.
     private void updateWaitTimers(Elevator elevator) {
         for (int i = elevator.waitingGuests.size() - 1; i >= 0; i--) {
-            Guest g = elevator.waitingGuests.get(i);
-            g.elevatorWaitTimer++;
+            Guest waitingGuest = elevator.waitingGuests.get(i);
+            waitingGuest.elevatorWaitTimer++;
 
-            if (g.elevatorWaitTimer >= data.guestSettings.getElevatorWaitTimeout()) {
+            if (waitingGuest.elevatorWaitTimer >= data.guestSettings.getElevatorWaitTimeout()) {
                 elevator.waitingGuests.remove(i);
-                g.elevatorWaitTimer = 0;
-                g.forceStairs = true;
-                g.state = GuestState.WALKING;
+                waitingGuest.elevatorWaitTimer = 0;
+                waitingGuest.forceStairs = true;
+                waitingGuest.state = GuestState.WALKING;
 
-                if (logPanel != null) logPanel.addLog("😤 Gast " + g.id + " geeft op en neemt de trap.");
+                if (logPanel != null) logPanel.addLog("😤 Gast " + waitingGuest.id + " geeft op en neemt de trap.");
             }
         }
     }
@@ -75,7 +73,8 @@ public class ElevatorController {
         if (!elevator.passengers.isEmpty()) {
             int target = currentFloor;
             for (int i = 0; i < elevator.passengers.size(); i++) {
-                int floorY = (int) (elevator.passengers.get(i).targetY / data.tileSize);
+                Guest passenger = elevator.passengers.get(i);
+                int floorY = (int) (passenger.targetY / data.tileSize);
                 if (i == 0 || floorY < target) {
                     target = floorY;
                 }
@@ -86,8 +85,8 @@ public class ElevatorController {
 
         // Prioriteit 2: ga naar de verdieping waar iemand staat te wachten
         if (!elevator.waitingGuests.isEmpty()) {
-            int floorY = (int) ((elevator.waitingGuests.get(0).y + 10) / data.tileSize);
-            elevator.targetFloor = floorY;
+            Guest firstWaiting = elevator.waitingGuests.get(0);
+            elevator.targetFloor = (int) ((firstWaiting.waitingOnFloor));
         }
     }
 }
