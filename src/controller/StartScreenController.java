@@ -17,7 +17,8 @@ public class StartScreenController {
         this.model = model;
     }
 
-    public void handleStart(JFrame parent, int capacity, int cleaningSeconds, int selectedScenario,
+    // METHODE-HANDTEKENING AANGEPAST: int cleanerCount is nu toegevoegd als 4e parameter
+    public void handleStart(JFrame parent, int capacity, int cleaningSeconds, int cleanerCount, int selectedScenario,
                             int cinemaDurationSeconds, int restaurantDurationSeconds, int fitnessDurationSeconds) {
 
         // 1. FILE PICKER
@@ -54,10 +55,12 @@ public class StartScreenController {
             System.err.println("WAARSCHUWING: Geen areas geladen!");
         }
 
+        // AANGEPAST: cleanerCount wordt nu meegegeven aan de SimulationPanel constructor
         SimulationPanel panel = new SimulationPanel(
                 areas,
                 capacity,
                 cleaningSeconds,
+                cleanerCount, // NIEUW
                 selectedScenario,
                 cinemaDurationSeconds,
                 restaurantDurationSeconds,

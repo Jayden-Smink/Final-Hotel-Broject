@@ -2,5 +2,6 @@ package model;
 
 public enum PersonType {
 
-    GUEST
+    GUEST,
+    CLEANER
 }

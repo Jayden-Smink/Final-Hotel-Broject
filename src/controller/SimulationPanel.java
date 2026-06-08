@@ -9,6 +9,8 @@ import java.util.List;
 
 import model.*;
 import view.SimulationRenderer;
+import factory.PersonFactory;
+import model.PersonType;
 
 public class SimulationPanel extends JPanel {
 
@@ -16,40 +18,62 @@ public class SimulationPanel extends JPanel {
     private final SimulationRenderer renderer;
     private final SimulationController controller;
     private final LogPanel logPanel;
-    private final HotelTimeEngine hte;
+    private final HotelTimeEngine hte; // Staat weer zoals vanouds
 
     private TimeControlPanel timeControlPanel;
 
-    // GEFIXT: De constructor accepteert nu de 3 extra parameters die SimulationData nodig heeft
     public SimulationPanel(
             List<Area> areas,
             int capacity,
             int cleaningSeconds,
-            int extraParam1, // TODO: Kijk in SimulationData.java hoe deze 3 ints heten (bijv. elevatorCapacity, etc.)
-            int extraParam2,
-            int extraParam3,
-            int selectedScenario
+            int cleanerCount,
+            int selectedScenario,
+            int cinemaDurationSeconds,
+            int restaurantDurationSeconds,
+            int fitnessDurationSeconds
     ) {
+        // 1. Simulatie data initialiseren
+        this.data = new SimulationData(
+                areas,
+                capacity,
+                cleaningSeconds,
+                cinemaDurationSeconds,
+                restaurantDurationSeconds,
+                fitnessDurationSeconds
+        );
 
-        // 1. Simulatie data initialiseren (GEFIXT: Nu met alle 5 de vereiste ints)
-        this.data = new SimulationData(areas, capacity, cleaningSeconds, extraParam1, extraParam2, extraParam3);
-
-        // 2. Log scherm initialiseren
+        this.data.numberOfCleaners = cleanerCount;
         this.logPanel = new LogPanel();
 
-        // 3. Controller initialiseren
+        // 2. Controller & Renderer initialiseren
         this.controller = new SimulationController(data, logPanel, selectedScenario);
-
-        // 4. Renderer initialiseren (met de cleanerController koppeling voor de twee schoonmakers)
         this.renderer = new SimulationRenderer(data, controller.getCleanerController());
 
-        // HTE
+        // 3. Schoonmakers dynamisch spawnen in de lobby
+        this.data.areas.stream()
+                .filter(a -> a.AreaType.equalsIgnoreCase("LOBBY"))
+                .findFirst()
+                .ifPresent(lobby -> {
+                    double lobbyX = (lobby.getPos()[0] * data.tileSize) + data.horizontalOffset + ((lobby.getDim()[0] * data.tileSize) / 2.0);
+                    double lobbyY = (lobby.getPos()[1] * data.tileSize) + 25.0;
+
+                    for (int i = 1; i <= data.numberOfCleaners; i++) {
+                        int cleanerId = i; // Nette unieke IDs (c1, c2...)
+
+                        Cleaner cleaner = (Cleaner) PersonFactory.createPerson(PersonType.CLEANER, cleanerId, lobbyX, lobbyY);
+                        cleaner.speed = 2.0;
+                        cleaner.setTarget(lobbyX, lobbyY);
+                        cleaner.state = CleanerState.IDLE;
+
+                        data.cleaners.put(cleaner.id, cleaner);
+                    }
+                });
+
+        // 4. HTE & Layout opbouwen
         this.hte = new HotelTimeEngine();
 
-        // Layout
         setLayout(new BorderLayout());
 
-        // Simulatie scherm
         JPanel simulationView = new JPanel(new BorderLayout()) {
             @Override
             protected void paintComponent(Graphics g) {
@@ -80,7 +104,7 @@ public class SimulationPanel extends JPanel {
 
         add(splitPane, BorderLayout.CENTER);
 
-        // Game loop
+        // Game loop starten
         GameLoop gameLoop = new GameLoop(controller, hte, () -> {
             if (timeControlPanel != null) {
                 timeControlPanel.refresh();

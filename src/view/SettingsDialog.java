@@ -5,16 +5,18 @@ import java.awt.*;
 
 public class SettingsDialog extends JDialog {
     private final JSpinner cleaningSpinner;
+    private final JSpinner cleanerCountSpinner; // NIEUW: Spinner voor aantal schoonmakers
     private final JSpinner cinemaSpinner;
     private final JSpinner restaurantSpinner;
     private final JSpinner fitnessSpinner;
     private final JComboBox<String> scenarioComboBox;
     private boolean confirmed = false;
 
-    public SettingsDialog(JFrame parent, int currentCleaningSeconds, int currentScenario) {
+    // CONSTRUCTOR AANGEPAST: neemt nu ook 'currentCleanerCount' mee
+    public SettingsDialog(JFrame parent, int currentCleaningSeconds, int currentCleanerCount, int currentScenario) {
         super(parent, "Instellingen", true);
 
-        setSize(350, 380);
+        setSize(350, 420); // Hoogte iets vergroot (van 380 naar 420) voor de extra rij
         setLocationRelativeTo(parent);
         setLayout(new BorderLayout());
 
@@ -25,6 +27,11 @@ public class SettingsDialog extends JDialog {
         // Schoonmaaktijd
         cleaningSpinner = new JSpinner(new SpinnerNumberModel(currentCleaningSeconds, 1, 300, 1));
         content.add(createRow("Schoonmaaktijd (HTE):", cleaningSpinner));
+        content.add(Box.createVerticalStrut(10));
+
+        // NIEUW: Aantal schoonmakers (Standaard op huidige waarde, min 1, max 10, stappen van 1)
+        cleanerCountSpinner = new JSpinner(new SpinnerNumberModel(currentCleanerCount, 1, 10, 1));
+        content.add(createRow("Aantal schoonmakers:", cleanerCountSpinner));
         content.add(Box.createVerticalStrut(10));
 
         // Cinema duur
@@ -65,6 +72,10 @@ public class SettingsDialog extends JDialog {
     }
 
     public int getCleaningSeconds() { return (int) cleaningSpinner.getValue(); }
+
+    // NIEUW: Getter om het gekozen aantal schoonmakers op te vragen
+    public int getCleanerCount() { return (int) cleanerCountSpinner.getValue(); }
+
     public int getCinemaDurationSeconds() { return (int) cinemaSpinner.getValue(); }
     public int getRestaurantDurationSeconds() { return (int) restaurantSpinner.getValue(); }
     public int getFitnessDurationSeconds() { return (int) fitnessSpinner.getValue(); }

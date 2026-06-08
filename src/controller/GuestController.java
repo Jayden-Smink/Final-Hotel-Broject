@@ -39,8 +39,8 @@ public class GuestController {
      * maakt zelf de gast aan via de factory en delegeert de administratie.
      */
     public void processCheckIn(int guestId, int preferredRoomId) {
-        // 1. Maak de gast dynamisch aan via de PersonFactory
-        Guest guest = PersonFactory.createGuest(PersonType.GUEST, guestId, 0, 0);
+        // 1. Maak de gast dynamisch aan via de vernieuwde PersonFactory en cast naar Guest
+        Guest guest = (Guest) PersonFactory.createPerson(PersonType.GUEST, guestId, 0, 0);
 
         // 2. Zet de gast fysiek op zijn startpositie in het hotel
         this.spawnGuest(guest);
@@ -67,7 +67,7 @@ public class GuestController {
                 g.state = GuestState.WALKING;
             }
 
-            // Bereken en verplaats de gast een stapje dichter bij zijn huidige targetX en targetY
+            // Bereken en verplaats de gast een stapje dichter bij zijn huidige targetXและ targetY
             guestMover.moveGuest(g);
         }
     }

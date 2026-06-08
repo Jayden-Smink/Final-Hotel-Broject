@@ -12,6 +12,7 @@ public class StartScreen extends JFrame {
     private final StartScreenController controller = new StartScreenController(listModel);
 
     private int cleaningSeconds = 10;
+    private int cleanerCount = 2; // NIEUW: Houdt het aantal schoonmakers bij (standaard 2)
     private int selectedScenario = 1;
     private int cinemaDurationSeconds = 30;
     private int restaurantDurationSeconds = 10;
@@ -44,11 +45,13 @@ public class StartScreen extends JFrame {
         JButton quitBtn = UIFactory.createStyledButton("Quit", false);
 
         settingsBtn.addActionListener(e -> {
-            SettingsDialog dialog = new SettingsDialog(this, cleaningSeconds, selectedScenario);
+            // AANGEPAST: cleanerCount wordt nu meegegeven aan de constructor van de dialog
+            SettingsDialog dialog = new SettingsDialog(this, cleaningSeconds, cleanerCount, selectedScenario);
             dialog.setVisible(true);
 
             if (dialog.isConfirmed()) {
                 cleaningSeconds = dialog.getCleaningSeconds();
+                cleanerCount = dialog.getCleanerCount(); // NIEUW: Vang de waarde op uit de dialog
                 selectedScenario = dialog.getSelectedScenario();
                 cinemaDurationSeconds = dialog.getCinemaDurationSeconds();
                 restaurantDurationSeconds = dialog.getRestaurantDurationSeconds();
@@ -60,6 +63,7 @@ public class StartScreen extends JFrame {
                 this,
                 (int) capSpinner.getValue(),
                 cleaningSeconds,
+                cleanerCount, // NIEUW: Geeft het aantal schoonmakers door aan de controller
                 selectedScenario,
                 cinemaDurationSeconds,
                 restaurantDurationSeconds,

@@ -8,7 +8,11 @@ public class SimulationData {
     public Map<Integer, Guest> guests = new HashMap<>();
     public int tileSize = 60;
     public int horizontalOffset = 60;
-    public Cleaner cleaner;
+
+    // NIEUW: Vervangt de losse 'public Cleaner cleaner;' voor SRP en meerdere schoonmakers
+    public int numberOfCleaners = 2; // Standaard basis van 2 stuks, wordt overschreven bij de start
+    public Map<Integer, Cleaner> cleaners = new HashMap<>(); // Beheert alle actieve schoonmakers
+
     public CleanerSettings cleanerSettings;
     public GuestSettings guestSettings;
     public FacilitySettings facilitySettings;
@@ -27,18 +31,7 @@ public class SimulationData {
         this.elevator.maxCapacity = capacity;
         this.facilitySettings = new FacilitySettings(cinemaDurationSeconds, restaurantDurationSeconds, fitnessDurationSeconds);
 
-        areas.stream()
-                .filter(a -> a.AreaType.equalsIgnoreCase("LOBBY"))
-                .findFirst()
-                .ifPresent(lobby -> {
-                    int[] pos = lobby.getPos();
-                    int[] dim = lobby.getDim();
-                    double centerX = (pos[0] + dim[0] / 2.0) * 60.0;
-                    double centerY = (pos[1] * 60.0) + 25.0;
-                    cleaner = new Cleaner(0, centerX, centerY);
-                    cleaner.homeRoomId = -1;
-                    cleaner.targetX = centerX;
-                    cleaner.targetY = centerY;
-                });
+        // OUDE LOGICA VERWIJDERD: De losse cleaner wordt hier niet meer aangemaakt.
+        // Dit gebeurt nu dynamisch in de loop van het SimulationPanel via de PersonFactory!
     }
 }

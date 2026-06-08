@@ -21,8 +21,7 @@ public class SimulationController implements HotelEventListener {
     private final GuestActivityController guestActivityController;
 
     private final LogPanel logPanel;
-
-    private final HotelEventManager eventManager; // De externe event-generator (uit de JAR)
+    private final HotelEventManager eventManager; // We maken de variabele hier weer netjes aan
     private final CleanerController cleanerController;
 
     public SimulationController(SimulationData data, LogPanel logPanel, int selectedScenario) {
@@ -30,28 +29,24 @@ public class SimulationController implements HotelEventListener {
         this.data = data;
         this.logPanel = logPanel;
 
-        // 1. Initialiseer eerst de controllers die geen afhankelijkheden hebben
+        // 1. Initialiseer de sub-controllers
         this.elevatorController = new ElevatorController(data, logPanel);
         this.receptionistController = new ReceptionistController(data, logPanel);
-
-        // 2. Initialiseer de GuestController en geef de receptionistController mee
         this.guestController = new GuestController(data, logPanel, this.receptionistController);
-
-        // 3. Initialiseer de overige controllers
         this.guestActivityController = new GuestActivityController(data, receptionistController, logPanel);
         this.cleanerController = new CleanerController(data, logPanel);
 
-        // OBSERVER SETUP: Registreer deze controller bij de eventManager zodat notify() wordt aangeroepen bij events
+        // GEFIXT: We maken de instantie weer aan via 'new' om de non-static error op te lossen
         this.eventManager = new HotelEventManager();
-        eventManager.register(this);
+        this.eventManager.register(this);
 
-        // Start het gekozen scenario uit de SettingsDialog
+        // Start het gekozen scenario via de gemaakte instantie
         System.out.println("Gestart scenario: " + selectedScenario);
-        eventManager.start(selectedScenario);
+        this.eventManager.start(selectedScenario);
     }
 
     /**
-     * OBSERVER PATTERN - Vangt binnenkomende gebeurtenissen op vanuit dedjalla HotelEventManager.
+     * OBSERVER PATTERN - Vangt binnenkomende gebeurtenissen op vanuit de HotelEventManager.
      */
     @Override
     public void notify(HotelEvent event) {
@@ -60,80 +55,64 @@ public class SimulationController implements HotelEventListener {
         switch (event.getEventType()) {
 
             case CHECK_IN:
-                // Delegeer check-in direct naar GuestController
                 guestController.processCheckIn(
                         event.getGuestId(),
-                        event.getData() // Dit is het preferredRoomId
+                        event.getData()
                 );
                 break;
 
             case CHECK_OUT:
-                // Haal de vertrekkende gast op uit de centrale database
                 Guest leavingGuest = data.guests.get(event.getGuestId());
 
                 if (leavingGuest != null) {
-                    leavingGuest.isCheckingOut = true; // Zet de vlag op uitchecken
+                    leavingGuest.isCheckingOut = true;
 
-                    // Zoek de lobby op om te bepalen naar welke hoogte (Y) de gast moet lopen om het hotel te verlaten
                     data.areas.stream()
                             .filter(a -> a.AreaType.equalsIgnoreCase("LOBBY"))
                             .findFirst()
                             .ifPresent(lobby -> {
                                 double exitY = (lobby.getPos()[1] * data.tileSize) + data.tileSize / 2.0;
-                                leavingGuest.setTarget(20.0, exitY); // Stuur de gast naar de hoteluitgang (X=20)
+                                leavingGuest.setTarget(20.0, exitY);
                             });
 
                     if (logPanel != null) {
                         logPanel.addLog("🚪 Gast " + leavingGuest.id + " checkt uit.");
                     }
                 }
-
-                // De daadwerkelijke verwijdering uit het hotel gebeurt in de GuestActivityController zodra het doel bereikt is.
                 break;
 
             case NEED_FOOD:
-                if (logPanel != null) {
-                    logPanel.addLog("🍔 Gast " + event.getGuestId() + " wil eten.");
-                }
+                if (logPanel != null) logPanel.addLog("🍔 Gast " + event.getGuestId() + " wil eten.");
                 break;
 
             case GOTO_FITNESS:
-                if (logPanel != null) {
-                    logPanel.addLog("🏋️ Gast " + event.getGuestId() + " gaat fitnessen.");
-                }
+                if (logPanel != null) logPanel.addLog("🏋️ Gast " + event.getGuestId() + " gaat fitnessen.");
                 break;
 
             case GOTO_CINEMA:
-                if (logPanel != null) {
-                    logPanel.addLog("🎬 Gast " + event.getGuestId() + " gaat naar cinema.");
-                }
+                if (logPanel != null) logPanel.addLog("🎬 Gast " + event.getGuestId() + " gaat naar cinema.");
                 break;
 
             case CLEANING_EMERGENCY:
-                // Delegeer het noodgeval direct naar de CleanerController
-                cleanerController.handleCleaningEmergency(event.getData());
+                // GEFIXT: event.getData() is al een int. Geen parseInt-fouten of crashes meer!
+                int roomId = event.getData();
+                cleanerController.handleCleaningEmergency(roomId);
 
                 if (logPanel != null) {
-                    logPanel.addLog("🧹 Cleaning emergency!");
+                    logPanel.addLog("🧹 Cleaning emergency in kamer " + roomId + "!");
                 }
                 break;
 
             case EVACUATE:
-                if (logPanel != null) {
-                    logPanel.addLog("🚨 EVACUATIE!");
-                }
+                if (logPanel != null) logPanel.addLog("🚨 EVACUATIE!");
                 break;
 
             case GODZILLA:
-                if (logPanel != null) {
-                    logPanel.addLog("🦖 GODZILLA ATTACK!");
-                }
+                if (logPanel != null) logPanel.addLog("🦖 GODZILLA ATTACK!");
                 break;
 
             case START_CINEMA:
-                if (logPanel != null) {
-                    logPanel.addLog("🎥 Cinema gestart.");
-                }
+                if (logPanel != null) logPanel.addLog("🎥 Cinema gestart.");
                 break;
 
             case NONE:
@@ -143,22 +122,15 @@ public class SimulationController implements HotelEventListener {
     }
 
     /**
-     * MAIN GAME LOOP - Wordt via de GameLoop klasse elke frame/tick aangeroepen.
-     * Dit zorgt ervoor dat de hele simulatie synchroon blijft lopen.
+     * MAIN GAME LOOP
      */
     public void updateTick() {
-        // 1. Verplaats de lopende gasten een stapje
         guestController.update();
-
-        // 2. Laat de lift bewegen en mensen in-/uitstappen
         elevatorController.update();
-
-        // 3. Update de timers en het AI-gedrag van de gasten (ruimtewissels)
         guestActivityController.updateActivities();
-
-        // 4. Verplaats de schoonmaker en update zijn poets-timer
         cleanerController.update();
     }
+
     public CleanerController getCleanerController() {
         return this.cleanerController;
     }

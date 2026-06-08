@@ -49,10 +49,24 @@ public class GuestActivityController {
                 roomController.maakGastVrij(data, g.id);
                 data.guests.remove(g.id);
 
-                // Add dirty room to cleaner's list
-                if (roomId != -1 && data.cleaner != null) {
-                    data.cleaner.dirtyRooms.add(roomId);
-                    if (logPanel != null) logPanel.addLog("🛏️ Kamer " + roomId + " toegevoegd aan schoonmaaklijst.");
+                // GEFIXT: Werkverdeling over de nieuwe map met meerdere schoonmakers
+                if (roomId != -1 && !data.cleaners.isEmpty()) {
+                    Cleaner bestCleaner = null;
+
+                    // Zoek de schoonmaker met de minste vieze kamers in zijn wachtrij
+                    for (Cleaner c : data.cleaners.values()) {
+                        if (bestCleaner == null || c.dirtyRooms.size() < bestCleaner.dirtyRooms.size()) {
+                            bestCleaner = c;
+                        }
+                    }
+
+                    // Wijs de kamer toe aan de schoonmaker die het minst druk is
+                    if (bestCleaner != null) {
+                        bestCleaner.dirtyRooms.add(roomId);
+                        if (logPanel != null) {
+                            logPanel.addLog("🛏️ Kamer " + roomId + " toegewezen aan schoonmaker " + bestCleaner.id);
+                        }
+                    }
                 }
 
                 if (logPanel != null) logPanel.addLog("🚶 Gast " + g.id + " heeft het hotel verlaten.");
