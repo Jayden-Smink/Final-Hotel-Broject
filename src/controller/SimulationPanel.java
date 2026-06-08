@@ -1,10 +1,13 @@
 package controller;
 
 import view.LogPanel;
+import view.RoomOverviewPanel;
 import view.TimeControlPanel;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.List;
 
 import model.*;
@@ -18,7 +21,7 @@ public class SimulationPanel extends JPanel {
     private final SimulationRenderer renderer;
     private final SimulationController controller;
     private final LogPanel logPanel;
-    private final HotelTimeEngine hte; // Staat weer zoals vanouds
+    private final HotelTimeEngine hte;
 
     private TimeControlPanel timeControlPanel;
 
@@ -58,13 +61,10 @@ public class SimulationPanel extends JPanel {
                     double lobbyY = (lobby.getPos()[1] * data.tileSize) + 25.0;
 
                     for (int i = 1; i <= data.numberOfCleaners; i++) {
-                        int cleanerId = i; // Nette unieke IDs (c1, c2...)
-
-                        Cleaner cleaner = (Cleaner) PersonFactory.createPerson(PersonType.CLEANER, cleanerId, lobbyX, lobbyY);
+                        Cleaner cleaner = (Cleaner) PersonFactory.createPerson(PersonType.CLEANER, i, lobbyX, lobbyY);
                         cleaner.speed = 2.0;
                         cleaner.setTarget(lobbyX, lobbyY);
                         cleaner.state = CleanerState.IDLE;
-
                         data.cleaners.put(cleaner.id, cleaner);
                     }
                 });
@@ -83,6 +83,16 @@ public class SimulationPanel extends JPanel {
         };
 
         simulationView.setPreferredSize(new Dimension(900, 2000));
+
+        // Lobby klik detectie
+        simulationView.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (isLobbyClicked(e.getX(), e.getY())) {
+                    openRoomOverview();
+                }
+            }
+        });
 
         JScrollPane scrollPane = new JScrollPane(simulationView);
         scrollPane.getVerticalScrollBar().setUnitIncrement(16);
@@ -113,6 +123,34 @@ public class SimulationPanel extends JPanel {
         });
 
         gameLoop.start();
+    }
+
+    private boolean isLobbyClicked(int mouseX, int mouseY) {
+        for (int i = 0; i < data.areas.size(); i++) {
+            Area a = data.areas.get(i);
+            if (a.AreaType.equalsIgnoreCase("LOBBY")) {
+                int x = (a.getPos()[0] * data.tileSize) + data.horizontalOffset;
+                int y = a.getPos()[1] * data.tileSize;
+                int w = a.getDim()[0] * data.tileSize;
+                int h = a.getDim()[1] * data.tileSize;
+                if (mouseX >= x && mouseX <= x + w && mouseY >= y && mouseY <= y + h) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private void openRoomOverview() {
+        JDialog dialog = new JDialog(
+                SwingUtilities.getWindowAncestor(this),
+                "Kamer Overzicht",
+                Dialog.ModalityType.MODELESS
+        );
+        dialog.setContentPane(new RoomOverviewPanel(data));
+        dialog.pack();
+        dialog.setLocationRelativeTo(this);
+        dialog.setVisible(true);
     }
 
     public JPanel createBottomPanel() {
