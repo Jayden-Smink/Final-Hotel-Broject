@@ -6,3 +6,4 @@ public class main {
         SwingUtilities.invokeLater(StartScreen::new);
     }
 }
+
