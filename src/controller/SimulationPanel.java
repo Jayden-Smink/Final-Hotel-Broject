@@ -50,11 +50,11 @@ public class SimulationPanel extends JPanel {
         this.controller = new SimulationController(data, logPanel, selectedScenario);
         this.renderer = new SimulationRenderer(data, controller.getCleanerController());
 
+        // Zoek de lobby en spawn schoonmakers
         Area lobbyArea = null;
         for (int i = 0; i < this.data.areas.size(); i++) {
-            Area area = this.data.areas.get(i);
-            if (area.AreaType.equalsIgnoreCase("LOBBY")) {
-                lobbyArea = area;
+            if (this.data.areas.get(i).AreaType.equalsIgnoreCase("LOBBY")) {
+                lobbyArea = this.data.areas.get(i);
                 break;
             }
         }
@@ -122,12 +122,12 @@ public class SimulationPanel extends JPanel {
 
     private boolean isLobbyClicked(int mouseX, int mouseY) {
         for (int i = 0; i < data.areas.size(); i++) {
-            Area area = data.areas.get(i);
-            if (area.AreaType.equalsIgnoreCase("LOBBY")) {
-                int x = (area.getPos()[0] * data.tileSize) + data.horizontalOffset;
-                int y = area.getPos()[1] * data.tileSize;
-                int w = area.getDim()[0] * data.tileSize;
-                int h = area.getDim()[1] * data.tileSize;
+            Area a = data.areas.get(i);
+            if (a.AreaType.equalsIgnoreCase("LOBBY")) {
+                int x = (a.getPos()[0] * data.tileSize) + data.horizontalOffset;
+                int y = a.getPos()[1] * data.tileSize;
+                int w = a.getDim()[0] * data.tileSize;
+                int h = a.getDim()[1] * data.tileSize;
                 if (mouseX >= x && mouseX <= x + w && mouseY >= y && mouseY <= y + h) {
                     return true;
                 }

@@ -13,9 +13,8 @@ public class GuestController {
     private final SimulationData data;
     private final LogPanel logPanel;
     private final GuestMover guestMover;
-    private final ReceptionistController receptionistController; // Toegevoegd om de incheckregie te voeren
+    private final ReceptionistController receptionistController;
 
-    // Constructor aangepast om ook de ReceptionistController te ontvangen
     public GuestController(
             SimulationData data,
             LogPanel logPanel,
@@ -25,7 +24,6 @@ public class GuestController {
         this.logPanel = logPanel;
         this.receptionistController = receptionistController;
 
-        // Maak de bewegingsmotor aan en geef hem direct de trappendata mee
         this.guestMover =
                 new GuestMover(
                         data,
@@ -34,21 +32,64 @@ public class GuestController {
     }
 
     /**
-     * BEHEERT DE INCHECK-LOGICA (Architectuur aanpassing docent)
+     * BEHEERT DE INCHECK-LOGICA.
+     *
      * Deze methode vangt de kale data op uit de SimulationController,
      * maakt zelf de gast aan via de factory en delegeert de administratie.
+     *
+     * Extra bescherming:
+     * - ongeldige guestId wordt genegeerd
+     * - dubbele check-in met dezelfde guestId wordt genegeerd
+     * - gast wordt alleen aangemaakt als LOBBY en RECEPTION bestaan
      */
     public void processCheckIn(int guestId, int preferredRoomId) {
-        // 1. Maak de gast dynamisch aan via de vernieuwde PersonFactory en cast naar Guest
-        Guest guest = (Guest) PersonFactory.createPerson(PersonType.GUEST, guestId, 0, 0);
 
-        // 2. Zet de gast fysiek op zijn startpositie in het hotel
-        this.spawnGuest(guest);
+        if (guestId <= 0) {
+            if (logPanel != null) {
+                logPanel.addLog("⚠️ Ongeldige guestId genegeerd: " + guestId);
+            }
+            return;
+        }
 
-        // 3. Stuur de receptionist aan om de administratieve kamerreservering te verwerken
+        if (data.guests.containsKey(guestId)) {
+            if (logPanel != null) {
+                logPanel.addLog("⚠️ Dubbele check-in genegeerd voor gast " + guestId + ".");
+            }
+            return;
+        }
+
+        if (!hasArea("LOBBY")) {
+            if (logPanel != null) {
+                logPanel.addLog("⚠️ Gast " + guestId + " kan niet spawnen: lobby ontbreekt.");
+            }
+            return;
+        }
+
+        if (!hasArea("RECEPTION")) {
+            if (logPanel != null) {
+                logPanel.addLog("⚠️ Gast " + guestId + " kan niet spawnen: receptie ontbreekt.");
+            }
+            return;
+        }
+
+        Guest guest = (Guest) PersonFactory.createPerson(
+                PersonType.GUEST,
+                guestId,
+                0,
+                0
+        );
+
+        boolean spawned = spawnGuest(guest);
+
+        if (!spawned) {
+            if (logPanel != null) {
+                logPanel.addLog("⚠️ Gast " + guestId + " kon niet correct gespawned worden.");
+            }
+            return;
+        }
+
         receptionistController.handleCheckIn(guestId, preferredRoomId);
 
-        // 4. Schrijf de melding naar het logpaneel
         if (logPanel != null) {
             logPanel.addLog("👤 Gast " + guest.id + " is ingecheckt.");
         }
@@ -56,18 +97,20 @@ public class GuestController {
 
     /**
      * Update alle actieve gasten in het hotel.
-     * Deze methode wordt elke tick (frame) aangeroepen vanuit de hoofdloop.
+     * Deze methode wordt elke tick/frame aangeroepen vanuit de hoofdloop.
      */
     public void update() {
 
         for (Guest g : data.guests.values()) {
 
-            // Statuswissel: Als een gast net de lift uitstapt, mag hij nu weer gewoon gaan lopen
+            if (g == null) {
+                continue;
+            }
+
             if (g.state == GuestState.EXITING_LIFT) {
                 g.state = GuestState.WALKING;
             }
 
-            // Bereken en verplaats de gast een stapje dichter bij zijn huidige targetXและ targetY
             guestMover.moveGuest(g);
         }
     }
@@ -75,44 +118,70 @@ public class GuestController {
     /**
      * Voegt een gast fysiek toe aan het hotel aan de linkerkant van de lobby.
      * Berekent direct het loopdoel naar de receptie.
+     *
+     * Return:
+     * true  = gast is succesvol gespawned
+     * false = gast kon niet gespawned worden
      */
-    public void spawnGuest(Guest guest) {
+    public boolean spawnGuest(Guest guest) {
 
-        // 1. Zoek eerst de lobby op om te bepalen op welke hoogte (Y-as) de gast moet starten
-        data.areas.stream()
-                .filter(a ->
-                        a.AreaType.equalsIgnoreCase("LOBBY")
-                )
-                .findFirst()
-                .ifPresent(lobby -> {
+        if (guest == null) {
+            return false;
+        }
 
-                    // Bereken het verticale middelpunt van de lobby
-                    double lobbyY =
-                            (lobby.getPos()[1] * data.tileSize) + data.tileSize/2.0;
+        Area lobby = findAreaByType("LOBBY");
+        Area reception = findAreaByType("RECEPTION");
 
-                    // Zet de startpositie helemaal links bij de denkbeeldige ingang
-                    guest.x = 20.0;
-                    guest.y = lobbyY;
+        if (lobby == null || reception == null) {
+            return false;
+        }
 
-                    // Zet de gast direct in de wandelmodus
-                    guest.state = GuestState.WALKING;
+        double lobbyY =
+                (lobby.getPos()[1] * data.tileSize)
+                        + data.tileSize / 2.0;
 
-                    // 2. Zoek de receptie op, want daar moet de gast nu als eerste naartoe lopen
-                    data.areas.stream()
-                            .filter(a -> a.AreaType.equalsIgnoreCase("RECEPTION"))
-                            .findFirst()
-                            .ifPresent(reception -> {
+        guest.x = 20.0;
+        guest.y = lobbyY;
 
-                                // Bereken het horizontale middelpunt van de receptiebalie
-                                double receptionX = (reception.getPos()[0] * data.tileSize)
-                                        + ((reception.getDim()[0] * data.tileSize) / 2.0);
+        guest.state = GuestState.WALKING;
+        guest.isInRoom = false;
+        guest.isCheckingOut = false;
 
-                                // Stel het eerste doel (target) in: loop horizontaal door de lobby naar de receptie
-                                guest.setTarget(receptionX, lobbyY);
-                            });
+        /*
+         * Belangrijk:
+         * Deze status voorkomt dat dezelfde gast steeds opnieuw door receptie-logica wordt verwerkt
+         * wanneer hij toevallig nog binnen de RECEPTION-bounds staat.
+         */
+        guest.currentActivity = "WALKING_TO_RECEPTION";
+        guest.currentFacility = "";
+        guest.activityTimer = 0;
 
-                    // 3. Registreer de gast officieel in de centrale simulatiedatabase
-                    data.guests.put(guest.id, guest);
-                });
+        double receptionX =
+                (reception.getPos()[0] * data.tileSize)
+                        + ((reception.getDim()[0] * data.tileSize) / 2.0);
+
+        guest.setTarget(receptionX, lobbyY);
+
+        data.guests.put(guest.id, guest);
+
+        return true;
+    }
+
+    private boolean hasArea(String type) {
+        return findAreaByType(type) != null;
+    }
+
+    private Area findAreaByType(String type) {
+        if (data.areas == null) {
+            return null;
+        }
+
+        for (Area area : data.areas) {
+            if (area.AreaType.equalsIgnoreCase(type)) {
+                return area;
+            }
+        }
+
+        return null;
     }
 }

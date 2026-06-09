@@ -19,12 +19,12 @@ public class SimulationData {
     public SimulationData(List<Area> areas, int capacity, int cleaningSeconds, int cinemaDurationSeconds, int restaurantDurationSeconds, int fitnessDurationSeconds) {
         this.areas = areas;
         this.cleanerSettings = new CleanerSettings(cleaningSeconds);
-        this.guestSettings = new GuestSettings(60);
+        this.guestSettings = new GuestSettings(15);
 
+        // Zoek de onderste verdieping via een gewone for loop
         int bottomFloor = 0;
         for (int i = 0; i < areas.size(); i++) {
-            Area area = areas.get(i);
-            int floorY = area.getPos()[1];
+            int floorY = areas.get(i).getPos()[1];
             if (floorY > bottomFloor) {
                 bottomFloor = floorY;
             }

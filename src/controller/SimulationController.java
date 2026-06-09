@@ -50,10 +50,11 @@ public class SimulationController implements HotelEventListener {
                 if (leavingGuest != null) {
                     leavingGuest.isCheckingOut = true;
 
+                    // Zoek de lobby zonder stream
                     for (int i = 0; i < data.areas.size(); i++) {
-                        Area area = data.areas.get(i);
-                        if (area.AreaType.equalsIgnoreCase("LOBBY")) {
-                            double exitY = (area.getPos()[1] * data.tileSize) + data.tileSize / 2.0;
+                        Area a = data.areas.get(i);
+                        if (a.AreaType.equalsIgnoreCase("LOBBY")) {
+                            double exitY = (a.getPos()[1] * data.tileSize) + data.tileSize / 2.0;
                             leavingGuest.setTarget(20.0, exitY);
                             break;
                         }
