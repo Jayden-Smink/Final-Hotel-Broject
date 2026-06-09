@@ -11,32 +11,44 @@ import java.util.*;
 import java.util.List;
 import model.CleanerState;
 
+/**
+ * DEZE KLASSE: SimulationRenderer
+ * Verantwoordelijk voor het visueel uittekenen (renderen) van de hele hotelsimulatie.
+ * Het vertaalt de logica en data (Model) naar plaatjes en kleuren op het scherm (View).
+ */
 public class SimulationRenderer {
+    // BEHEERDERS VAN DE DATA:
+    // data: Bevat alle informatie over de kamers, de lift en de gasten.
     private final SimulationData data;
+    // cleanerController: Geeft toegang tot de logica en data van de schoonmakers (de pool).
     private final CleanerController cleanerController; // KOPPELING: Nu hebben we toegang tot de pool!
 
+    // OPSLAG: Bewaart ingeladen afbeeldingen in het geheugen zodat we ze niet elke frame opnieuw van de harde schijf hoeven te lezen.
     private final Map<String, BufferedImage> assetCache = new HashMap<>();
 
-    // Area types that get the occupied overlay and guest count badge
+    // CONFIGURATIE: Area types that get the occupied overlay and guest count badge
+    // Bepaalt welke type kamers interactief zijn en dus een gastenteller en rode gloed krijgen als ze bezet zijn.
     private static final Set<String> ACTIVITY_AREAS = Set.of(
-            "ROOM", "RESTAURANT", "CINEMA", "FITNESS", "RECEPTION"
+            "ROOM", "RESTAURANT", "CINEMA", "FITNESS"
     );
 
     /*
-     * Deze areas worden NA de elevator getekend.
-     * Daardoor liggen ze visueel bovenop de elevator.
+     * CONFIGURATIE: Deze areas worden NA de elevator getekend.
+     * Daardoor liggen ze visueel bovenop de elevator (zodat de lift achter de lobby/receptie lijkt te verdwijnen).
      */
     private static final Set<String> FRONT_LAYER_AREAS = Set.of(
             "LOBBY", "RECEPTION"
     );
 
+    // DE BOUWER (Constructor): Wordt aangeroepen bij de opstart om de Renderer klaar te maken.
     // AANPASSING: De constructor verwacht nu ook de cleanerController
     public SimulationRenderer(SimulationData data, CleanerController cleanerController) {
-        loadAssets();
+        loadAssets(); // Zorgt dat de plaatjes direct in het geheugen staan
         this.data = data;
         this.cleanerController = cleanerController;
     }
 
+    // DE LADER: Verantwoordelijk voor het inlezen van .png bestanden uit de mappenstructuur.
     private void loadAssets() {
         String[] typesToLoad = {
                 "ROOM", "CINEMA", "RESTAURANT", "FITNESS",
@@ -58,28 +70,33 @@ public class SimulationRenderer {
         }
     }
 
+    // DE HOOFDREGISSEUR (Main Render Loop): Bepaalt de volgorde waarin alles over elkaar heen getekend wordt.
+    // Wordt continu aangeroepen om het scherm te updaten.
     public void render(Graphics2D g2, SimulationData data) {
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
+        // Achtergrondkleur van de hele applicatie tekenen
         g2.setColor(new Color(30, 30, 30));
         g2.fillRect(0, 0, 2000, 2000);
 
-        // 1. Teken alle areas behalve LOBBY en RECEPTION
+        // 1. Teken alle areas behalve LOBBY en RECEPTION (De basis van het hotel)
         drawAreas(g2, data, false);
 
-        // 2. Teken elevator
+        // 2. Teken elevator (Wordt over de basis getekend)
         drawElevator(g2, data);
 
-        // 3. Teken LOBBY en RECEPTION bovenop de elevator
+        // 3. Teken LOBBY en RECEPTION bovenop de elevator (Zodat de lift hier 'achter' valt)
         drawAreas(g2, data, true);
 
-        // 4. Teken gasten
+        // 4. Teken gasten (Poppetjes die door het hotel bewegen)
         drawGuests(g2, data);
 
-        // 5. Teken schoonmakers (NU MEERVOUD)
+        // 5. Teken schoonmakers (NU MEERVOUD) (Schoonmakers worden als laatste getekend zodat ze altijd zichtbaar zijn)
         drawCleaners(g2);
     }
 
+    // DE KAMER-VERDELER: Loopt door de lijst met alle kamers en bepaalt op basis van 'frontLayerOnly' of
+    // de kamer op dit moment aan de beurt is om getekend te worden.
     private void drawAreas(Graphics2D g2, SimulationData data, boolean frontLayerOnly) {
         if (data.areas == null) return;
 
@@ -87,13 +104,15 @@ public class SimulationRenderer {
             Area area = data.areas.get(i);
             boolean isFrontLayer = FRONT_LAYER_AREAS.contains(area.AreaType.toUpperCase());
 
+            // Check of deze kamer in de huidige teken-laag thuishoort
             if (frontLayerOnly == isFrontLayer) {
                 int count = countGuests(area, data.guests);
-                drawArea(g2, area, count);
+                drawArea(g2, area, count); // Roept de specifieke tekenaar aan voor deze kamer
             }
         }
     }
 
+    // DE LIFT-TEKENAAR: Berekent waar de lift is en tekent het lift-plaatje (of een blauw blokje als fallback).
     private void drawElevator(Graphics2D g2, SimulationData data) {
         if (data.elevator == null) return;
 
@@ -110,6 +129,8 @@ public class SimulationRenderer {
         }
     }
 
+    // DE GASTEN-TEKENAAR: Haalt alle gasten op, pakt er een veilige kopie van (synchronized) en
+    // vraagt de 'GuestRenderer' om elke individuele gast op het scherm te zetten (behalve als ze in de lift staan).
     private void drawGuests(Graphics2D g2, SimulationData data) {
         if (data.guests == null) return;
 
@@ -126,6 +147,8 @@ public class SimulationRenderer {
         }
     }
 
+    // DE SCHOONMAKER-TEKENAAR: Haalt de actieve schoonmakers op uit de CleanerController.
+    // Tekent ze als groene stipjes met een naampje (bijv. "C1") die door het gebouw bewegen.
     // GEFIXT: Loopt nu door alle schoonmakers uit de pool heen!
     private void drawCleaners(Graphics2D g2) {
         if (cleanerController == null) return;
@@ -151,7 +174,8 @@ public class SimulationRenderer {
     }
 
     /**
-     * Telt het aantal gasten (IDLE) binnen de grenzen van deze area.
+     * DE GASTEN-TELLER:
+     * Telt het aantal gasten (IDLE) binnen de ruimtelijke grenzen (X en Y coördinaten) van een specifieke kamer.
      */
     private int countGuests(Area area, Map<Integer, Guest> guests) {
         if (guests == null) return 0;
@@ -161,15 +185,17 @@ public class SimulationRenderer {
         int areaW = area.getDim()[0] * data.tileSize;
         int areaH = area.getDim()[1] * data.tileSize;
 
-        return (int) guests.values().stream().filter(g ->
-                g.state == GuestState.IDLE &&
-                        g.x >= areaX - 10 &&
-                        g.x <= areaX + areaW + 10 &&
-                        g.y >= areaY &&
-                        g.y <= areaY + areaH
+        return (int) guests.values().stream().filter(guest ->
+                guest.state == GuestState.IDLE &&
+                        guest.x >= areaX - 10 &&
+                        guest.x <= areaX + areaW + 10 &&
+                        guest.y >= areaY &&
+                        guest.y <= areaY + areaH
         ).count();
     }
 
+    // DE KAMER-DETAILS TEKENAAR: Verantwoordelijk voor het effectief uittekenen van één enkele kamer.
+    // Hij tekent het plaatje (of kleur), de rode gloed (als de kamer bezet is), en de groene gloed (als er gepoetst wordt).
     private void drawArea(Graphics2D g2, Area area, int guestCount) {
         int[] pos = area.getPos();
         int[] dim = area.getDim();
@@ -196,9 +222,11 @@ public class SimulationRenderer {
             g2.fillRect(x, y, w, h);
         }
 
+        // Teken het echte plaatje van de kamer
         if (img != null) {
             g2.drawImage(img, x, y, w, h, null);
         } else {
+            // Als er geen plaatje is, gebruiken we reservekleuren
             if (assetKey.equals("RECEPTION")) {
                 g2.setColor(new Color(255, 218, 170));
             } else if (assetKey.equals("LOBBY")) {
@@ -212,7 +240,7 @@ public class SimulationRenderer {
             g2.fillRect(x, y, w, h);
         }
 
-        // Rood transparant overlay voor bezette activiteitsruimtes
+        // DE BEZET-INDICATOR: Tekent een rode transparante overlay als er gasten in een activiteitenruimte zijn.
         if (guestCount > 0 && ACTIVITY_AREAS.contains(area.AreaType.toUpperCase())) {
             Composite original = g2.getComposite();
             g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.35f));
@@ -221,16 +249,17 @@ public class SimulationRenderer {
             g2.setComposite(original);
         }
 
-        // Label
+        // NAAMLABEL: Zet de naam van de kamer linksboven in de hoek.
         g2.setFont(new Font("Arial", Font.BOLD, 10));
         g2.setColor(new Color(255, 255, 255, 120));
         g2.drawString(area.AreaType, x + 5, y + 15);
 
-        // Gast-telbadge rechtsbovenhoek, alleen voor activiteitsruimtes
+        // TELLERTJE: Laat zien hoeveel gasten er binnen zijn.
         if (ACTIVITY_AREAS.contains(area.AreaType.toUpperCase())) {
             drawGuestCountBadge(g2, x, y, w, guestCount);
         }
 
+        // DE SCHOONMAAK-INDICATOR: Vraagt aan de controller of er momenteel schoonmakers zijn in DEZE kamer.
         // GEFIXT: Groene overlay — Kamer wordt nu groen als EEN VAN DE schoonmakers hier poetst
         if (cleanerController != null) {
             List<Cleaner> activeCleaners = cleanerController.getActiveCleaners();
@@ -249,7 +278,9 @@ public class SimulationRenderer {
     }
 
     /**
+     * DE BADGE-TEKENAAR:
      * Tekent een klein badge-cirkel met het aantal gasten in de rechterbovenhoek van de area.
+     * Dit zorgt voor een nette visuele weergave in plaats van alleen een los getal.
      */
     private void drawGuestCountBadge(Graphics2D g2, int x, int y, int w, int guestCount) {
         String text = String.valueOf(guestCount);
@@ -266,7 +297,7 @@ public class SimulationRenderer {
         g2.setStroke(new BasicStroke(1f));
         g2.drawOval(badgeX, badgeY, badgeSize, badgeSize);
 
-        // Getal
+        // Getal mooi in het midden van de badge centreren
         g2.setFont(new Font("Arial", Font.BOLD, 11));
         FontMetrics fm = g2.getFontMetrics();
 
