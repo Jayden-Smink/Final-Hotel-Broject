@@ -19,70 +19,70 @@ public class GuestMover {
     /**
      * Regelt de stapsgewijze verplaatsing van een hotelgast.
      */
-    public void moveGuest(Guest g) {
-        if (g.state != GuestState.WALKING && g.state != GuestState.EXITING_LIFT) {
+    public void moveGuest(Guest guest) {
+        if (guest.state != GuestState.WALKING && guest.state != GuestState.EXITING_LIFT) {
             return;
         }
 
-        int currentFloorY = (int) ((g.y + 10) / data.tileSize);
-        int targetFloorY  = (int) ((g.targetY + 10) / data.tileSize);
+        int currentFloorY = (int) ((guest.y + 10) / data.tileSize);
+        int targetFloorY  = (int) ((guest.targetY + 10) / data.tileSize);
 
         // SCENARIO A: De gast bevindt zich nog NIET op de juiste verdieping
-        if (currentFloorY != targetFloorY && g.state != GuestState.EXITING_LIFT) {
+        if (currentFloorY != targetFloorY && guest.state != GuestState.EXITING_LIFT) {
 
-            if (g.forceStairs || routeCalculator.isFasterByStairs(g.x, currentFloorY, targetFloorY)) {
+            if (guest.forceStairs || routeCalculator.isFasterByStairs(guest.x, currentFloorY, targetFloorY)) {
 
                 // --- OPTIE 1: De trap nemen ---
                 double stairX = routeCalculator.getStairX();
 
-                if (Math.abs(g.x - stairX) > g.speed) {
-                    g.x += (g.x < stairX) ? g.speed : -g.speed;
+                if (Math.abs(guest.x - stairX) > guest.speed) {
+                    guest.x += (guest.x < stairX) ? guest.speed : -guest.speed;
                 } else {
-                    g.x = stairX;
-                    double stairSpeed = g.speed * 0.5;
-                    g.y += (g.y < g.targetY) ? stairSpeed : -stairSpeed;
+                    guest.x = stairX;
+                    double stairSpeed = guest.speed * 0.5;
+                    guest.y += (guest.y < guest.targetY) ? stairSpeed : -stairSpeed;
 
-                    if (Math.abs(g.y - targetFloorY * data.tileSize) < stairSpeed) {
-                        g.y = targetFloorY * data.tileSize;
-                        g.forceStairs = false; // reset zodra gast via trap op de goede verdieping staat
-                        g.state = GuestState.EXITING_LIFT;
+                    if (Math.abs(guest.y - targetFloorY * data.tileSize) < stairSpeed) {
+                        guest.y = targetFloorY * data.tileSize;
+                        guest.forceStairs = false; // reset zodra gast via trap op de goede verdieping staat
+                        guest.state = GuestState.EXITING_LIFT;
                     }
                 }
 
             } else {
 
                 // --- OPTIE 2: De lift nemen ---
-                double elevatorX = data.horizontalOffset + 10 + Math.abs(g.personalOffset % 20);
+                double elevatorX = data.horizontalOffset + 10 + Math.abs(guest.personalOffset % 20);
 
-                if (Math.abs(g.x - elevatorX) > g.speed) {
-                    g.x += (g.x < elevatorX) ? g.speed : -g.speed;
+                if (Math.abs(guest.x - elevatorX) > guest.speed) {
+                    guest.x += (guest.x < elevatorX) ? guest.speed : -guest.speed;
                 } else {
-                    g.x = elevatorX;
-                    g.state = GuestState.IN_QUEUE;
-                    g.elevatorWaitTimer = 0;
-                    g.waitingOnFloor = currentFloorY; // sla verdieping op bij het instappen van de wachtrij
-                    data.elevator.waitingGuests.add(g);
+                    guest.x = elevatorX;
+                    guest.state = GuestState.IN_QUEUE;
+                    guest.elevatorWaitTimer = 0;
+                    guest.waitingOnFloor = currentFloorY; // sla verdieping op bij het instappen van de wachtrij
+                    data.elevator.waitingGuests.add(guest);
                 }
             }
 
         } else {
             // SCENARIO B: De gast is op de JUISTE verdieping, loop naar de kamer/faciliteit
-            double finalTargetX = g.targetX;
+            double finalTargetX = guest.targetX;
             double finalTargetY = (targetFloorY * data.tileSize) + data.tileSize / 2.0;
 
-            if (Math.abs(g.x - finalTargetX) > g.speed) {
-                g.x += (g.x < finalTargetX) ? g.speed : -g.speed;
+            if (Math.abs(guest.x - finalTargetX) > guest.speed) {
+                guest.x += (guest.x < finalTargetX) ? guest.speed : -guest.speed;
 
-                if (Math.abs(g.y - finalTargetY) > g.speed) {
-                    g.y += (g.y < finalTargetY) ? g.speed : -g.speed;
+                if (Math.abs(guest.y - finalTargetY) > guest.speed) {
+                    guest.y += (guest.y < finalTargetY) ? guest.speed : -guest.speed;
                 }
-            } else if (Math.abs(g.y - g.targetY) > g.speed) {
-                g.y += (g.y < g.targetY) ? g.speed : -g.speed;
+            } else if (Math.abs(guest.y - guest.targetY) > guest.speed) {
+                guest.y += (guest.y < guest.targetY) ? guest.speed : -guest.speed;
             } else {
-                g.x = finalTargetX;
-                g.y = g.targetY;
-                g.forceStairs = false;
-                g.state = GuestState.AT_DESTINATION;
+                guest.x = finalTargetX;
+                guest.y = guest.targetY;
+                guest.forceStairs = false;
+                guest.state = GuestState.AT_DESTINATION;
             }
         }
     }

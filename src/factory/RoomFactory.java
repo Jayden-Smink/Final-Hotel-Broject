@@ -20,11 +20,11 @@ public class RoomFactory {
     }
 
     private static Area createArea(String type, String pos, String dim, int id) {
-        Area a = new Area();
-        a.AreaType = type;
-        a.Position = pos;
-        a.Dimension = dim;
-        a.id = id;
-        return a;
+        Area area = new Area();
+        area.AreaType = type;
+        area.Position = pos;
+        area.Dimension = dim;
+        area.id = id;
+        return area;
     }
 }

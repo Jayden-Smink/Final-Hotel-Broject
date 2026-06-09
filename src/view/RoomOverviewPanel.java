@@ -42,19 +42,19 @@ public class RoomOverviewPanel extends JPanel {
         tableModel.setRowCount(0);
 
         for (int i = 0; i < data.areas.size(); i++) {
-            Area a = data.areas.get(i);
-            if (!a.AreaType.equalsIgnoreCase("ROOM")) continue;
+            Area area = data.areas.get(i);
+            if (!area.AreaType.equalsIgnoreCase("ROOM")) continue;
 
-            String classification = a.classification != null ? a.classification : "-";
+            String classification = area.classification != null ? area.classification : "-";
 
-            if (a.currentOccupants.isEmpty()) {
-                tableModel.addRow(new Object[]{a.id, classification, "Vrij", "-"});
+            if (area.currentOccupants.isEmpty()) {
+                tableModel.addRow(new Object[]{area.id, classification, "Vrij", "-"});
             } else {
-                for (int j = 0; j < a.currentOccupants.size(); j++) {
-                    int guestId = a.currentOccupants.get(j);
-                    Guest g = data.guests.get(guestId);
-                    String status = g != null ? g.state.toString() : "Vertrokken";
-                    tableModel.addRow(new Object[]{a.id, classification, "Gast " + guestId, status});
+                for (int j = 0; j < area.currentOccupants.size(); j++) {
+                    int guestId = area.currentOccupants.get(j);
+                    Guest guest = data.guests.get(guestId);
+                    String status = guest != null ? guest.state.toString() : "Vertrokken";
+                    tableModel.addRow(new Object[]{area.id, classification, "Gast " + guestId, status});
                 }
             }
         }

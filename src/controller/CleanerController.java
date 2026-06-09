@@ -47,7 +47,9 @@ public class CleanerController {
 
         // Geef voorkeur aan een IDLE schoonmaker
         Cleaner bestWorker = null;
-        for (Cleaner worker : data.cleaners.values()) {
+        List<Cleaner> cleanerList = new ArrayList<>(data.cleaners.values());
+        for (int i = 0; i < cleanerList.size(); i++) {
+            Cleaner worker = cleanerList.get(i);
             if (worker.state == CleanerState.IDLE) {
                 bestWorker = worker;
                 break;
@@ -56,7 +58,9 @@ public class CleanerController {
 
         // Niemand IDLE? Pak degene met de kortste wachtrij
         if (bestWorker == null) {
-            for (Cleaner worker : data.cleaners.values()) {
+            List<Cleaner> cleanerList2 = new ArrayList<>(data.cleaners.values());
+            for (int i = 0; i < cleanerList2.size(); i++) {
+                Cleaner worker = cleanerList2.get(i);
                 if (bestWorker == null || worker.dirtyRooms.size() < bestWorker.dirtyRooms.size()) {
                     bestWorker = worker;
                 }
@@ -80,7 +84,9 @@ public class CleanerController {
      * De hoofd-update loop stuurt alle schoonmakers frame-by-frame aan.
      */
     public void update() {
-        for (Cleaner worker : data.cleaners.values()) {
+        List<Cleaner> activeCleaners = new ArrayList<>(data.cleaners.values());
+        for (int i = 0; i < activeCleaners.size(); i++) {
+            Cleaner worker = activeCleaners.get(i);
             cleanerMover.moveCleaner(worker);
 
             if (worker.state == CleanerState.CLEANING) {

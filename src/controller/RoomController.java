@@ -55,10 +55,11 @@ public class RoomController implements IRoomAssigner {
      * Wordt gebruikt bij het wisselen van activiteit of bij het definitief uitchecken.
      */
     public void maakGastVrij(SimulationData data, int gastId) {
-        for (Area a : data.areas) {
+        for (int i = 0; i < data.areas.size(); i++) {
+            Area area = data.areas.get(i);
             // Integer.valueOf is nodig zodat Java het getal als een Object-waarde ziet
             // en niet per ongeluk een index probeert te verwijderen.
-            a.currentOccupants.remove(Integer.valueOf(gastId));
+            area.currentOccupants.remove(Integer.valueOf(gastId));
         }
     }
 

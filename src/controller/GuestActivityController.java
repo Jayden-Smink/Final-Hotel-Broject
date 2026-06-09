@@ -2,6 +2,8 @@ package controller;
 
 import model.*;
 import view.LogPanel;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Orkestrator: roept per frame de locatie- en activiteitenlogica aan.
@@ -33,35 +35,37 @@ public class GuestActivityController {
      * Regelt de timers van stilstaande (IDLE) gasten en stuurt ze na verloop van tijd ergens anders heen.
      */
     private void handleDynamicGuestActivities() {
-        for (Guest g : data.guests.values()) {
+        List<Guest> guestList = new ArrayList<>(data.guests.values());
+        for (int i = 0; i < guestList.size(); i++) {
+            Guest guest = guestList.get(i);
 
-            if (g.state == GuestState.IDLE) {
+            if (guest.state == GuestState.IDLE) {
 
-                if (g.isCheckingOut) {
-                    navigator.sendGuestToExit(g);
+                if (guest.isCheckingOut) {
+                    navigator.sendGuestToExit(guest);
                     continue;
                 }
 
-                g.activityTimer++;
+                guest.activityTimer++;
 
-                int duration = getFacilityDuration(g);
-                if (g.activityTimer >= duration) {
+                int duration = getFacilityDuration(guest);
+                if (guest.activityTimer >= duration) {
 
-                    if (g.currentActivity.equals("ROOM")) {
-                        navigator.sendGuestToRandomFacility(g);
-                    } else if (g.currentActivity.equals("USING_FACILITY")) {
-                        navigator.returnGuestToRoom(g);
+                    if (guest.currentActivity.equals("ROOM")) {
+                        navigator.sendGuestToRandomFacility(guest);
+                    } else if (guest.currentActivity.equals("USING_FACILITY")) {
+                        navigator.returnGuestToRoom(guest);
                     }
 
-                    g.activityTimer = 0;
+                    guest.activityTimer = 0;
                 }
             }
         }
     }
 
-    private int getFacilityDuration(Guest g) {
-        if (g.currentActivity.equals("USING_FACILITY")) {
-            switch (g.currentFacility) {
+    private int getFacilityDuration(Guest guest) {
+        if (guest.currentActivity.equals("USING_FACILITY")) {
+            switch (guest.currentFacility) {
                 case "CINEMA":   return data.facilitySettings.getCinemaDurationFrames();
                 case "RESTAURANT": return data.facilitySettings.getRestaurantDurationFrames();
                 case "FITNESS":  return data.facilitySettings.getFitnessDurationFrames();

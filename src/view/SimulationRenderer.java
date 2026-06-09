@@ -44,7 +44,8 @@ public class SimulationRenderer {
                 "BACKROOMS"
         };
 
-        for (String type : typesToLoad) {
+        for (int i = 0; i < typesToLoad.length; i++) {
+            String type = typesToLoad[i];
             try {
                 File file = new File("src/view/Picture/" + type.toLowerCase() + ".png");
                 if (file.exists()) {
@@ -82,12 +83,13 @@ public class SimulationRenderer {
     private void drawAreas(Graphics2D g2, SimulationData data, boolean frontLayerOnly) {
         if (data.areas == null) return;
 
-        for (Area a : data.areas) {
-            boolean isFrontLayer = FRONT_LAYER_AREAS.contains(a.AreaType.toUpperCase());
+        for (int i = 0; i < data.areas.size(); i++) {
+            Area area = data.areas.get(i);
+            boolean isFrontLayer = FRONT_LAYER_AREAS.contains(area.AreaType.toUpperCase());
 
             if (frontLayerOnly == isFrontLayer) {
-                int count = countGuests(a, data.guests);
-                drawArea(g2, a, count);
+                int count = countGuests(area, data.guests);
+                drawArea(g2, area, count);
             }
         }
     }
@@ -116,9 +118,10 @@ public class SimulationRenderer {
             guestSnapshot = new ArrayList<>(data.guests.values());
         }
 
-        for (Guest g : guestSnapshot) {
-            if (g.state != GuestState.IN_LIFT) {
-                GuestRenderer.draw(g2, g, data.horizontalOffset);
+        for (int i = 0; i < guestSnapshot.size(); i++) {
+            Guest guest = guestSnapshot.get(i);
+            if (guest.state != GuestState.IN_LIFT) {
+                GuestRenderer.draw(g2, guest, data.horizontalOffset);
             }
         }
     }
@@ -127,7 +130,9 @@ public class SimulationRenderer {
     private void drawCleaners(Graphics2D g2) {
         if (cleanerController == null) return;
 
-        for (Cleaner cleaner : cleanerController.getActiveCleaners()) {
+        List<Cleaner> cleaners = cleanerController.getActiveCleaners();
+        for (int i = 0; i < cleaners.size(); i++) {
+            Cleaner cleaner = cleaners.get(i);
             // Als de schoonmaker in een kamer aan het poetsen is, verbergen we de stip (de kamer wordt immers al groen)
             if (cleaner.state == CleanerState.CLEANING) continue;
 
@@ -148,13 +153,13 @@ public class SimulationRenderer {
     /**
      * Telt het aantal gasten (IDLE) binnen de grenzen van deze area.
      */
-    private int countGuests(Area a, Map<Integer, Guest> guests) {
+    private int countGuests(Area area, Map<Integer, Guest> guests) {
         if (guests == null) return 0;
 
-        int areaX = a.getPos()[0] * data.tileSize;
-        int areaY = a.getPos()[1] * data.tileSize;
-        int areaW = a.getDim()[0] * data.tileSize;
-        int areaH = a.getDim()[1] * data.tileSize;
+        int areaX = area.getPos()[0] * data.tileSize;
+        int areaY = area.getPos()[1] * data.tileSize;
+        int areaW = area.getDim()[0] * data.tileSize;
+        int areaH = area.getDim()[1] * data.tileSize;
 
         return (int) guests.values().stream().filter(g ->
                 g.state == GuestState.IDLE &&
@@ -165,16 +170,16 @@ public class SimulationRenderer {
         ).count();
     }
 
-    private void drawArea(Graphics2D g2, Area a, int guestCount) {
-        int[] pos = a.getPos();
-        int[] dim = a.getDim();
+    private void drawArea(Graphics2D g2, Area area, int guestCount) {
+        int[] pos = area.getPos();
+        int[] dim = area.getDim();
 
         int x = (pos[0] * data.tileSize) + data.horizontalOffset;
         int y = pos[1] * data.tileSize;
         int w = dim[0] * data.tileSize;
         int h = dim[1] * data.tileSize;
 
-        String assetKey = a.AreaType.toUpperCase();
+        String assetKey = area.AreaType.toUpperCase();
 
         if (assetKey.contains("SCHACHT")) assetKey = "ELEVATOR-SHAFT";
         if (assetKey.contains("TRAP")) assetKey = "STAIRS";
@@ -186,7 +191,7 @@ public class SimulationRenderer {
          * kan de elevator anders nog zichtbaar blijven.
          * Daarom tekenen we eerst een donkere basislaag.
          */
-        if (FRONT_LAYER_AREAS.contains(a.AreaType.toUpperCase())) {
+        if (FRONT_LAYER_AREAS.contains(area.AreaType.toUpperCase())) {
             g2.setColor(new Color(30, 30, 30));
             g2.fillRect(x, y, w, h);
         }
@@ -208,7 +213,7 @@ public class SimulationRenderer {
         }
 
         // Rood transparant overlay voor bezette activiteitsruimtes
-        if (guestCount > 0 && ACTIVITY_AREAS.contains(a.AreaType.toUpperCase())) {
+        if (guestCount > 0 && ACTIVITY_AREAS.contains(area.AreaType.toUpperCase())) {
             Composite original = g2.getComposite();
             g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.35f));
             g2.setColor(new Color(220, 50, 50));
@@ -219,17 +224,19 @@ public class SimulationRenderer {
         // Label
         g2.setFont(new Font("Arial", Font.BOLD, 10));
         g2.setColor(new Color(255, 255, 255, 120));
-        g2.drawString(a.AreaType, x + 5, y + 15);
+        g2.drawString(area.AreaType, x + 5, y + 15);
 
         // Gast-telbadge rechtsbovenhoek, alleen voor activiteitsruimtes
-        if (ACTIVITY_AREAS.contains(a.AreaType.toUpperCase())) {
+        if (ACTIVITY_AREAS.contains(area.AreaType.toUpperCase())) {
             drawGuestCountBadge(g2, x, y, w, guestCount);
         }
 
         // GEFIXT: Groene overlay — Kamer wordt nu groen als EEN VAN DE schoonmakers hier poetst
         if (cleanerController != null) {
-            for (Cleaner cleaner : cleanerController.getActiveCleaners()) {
-                if (cleaner.assignedRoomId == a.id && cleaner.state == CleanerState.CLEANING) {
+            List<Cleaner> activeCleaners = cleanerController.getActiveCleaners();
+            for (int i = 0; i < activeCleaners.size(); i++) {
+                Cleaner cleaner = activeCleaners.get(i);
+                if (cleaner.assignedRoomId == area.id && cleaner.state == CleanerState.CLEANING) {
                     Composite original = g2.getComposite();
                     g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.35f));
                     g2.setColor(new Color(50, 220, 50));

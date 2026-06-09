@@ -122,12 +122,12 @@ public class SimulationPanel extends JPanel {
 
     private boolean isLobbyClicked(int mouseX, int mouseY) {
         for (int i = 0; i < data.areas.size(); i++) {
-            Area a = data.areas.get(i);
-            if (a.AreaType.equalsIgnoreCase("LOBBY")) {
-                int x = (a.getPos()[0] * data.tileSize) + data.horizontalOffset;
-                int y = a.getPos()[1] * data.tileSize;
-                int w = a.getDim()[0] * data.tileSize;
-                int h = a.getDim()[1] * data.tileSize;
+            Area area = data.areas.get(i);
+            if (area.AreaType.equalsIgnoreCase("LOBBY")) {
+                int x = (area.getPos()[0] * data.tileSize) + data.horizontalOffset;
+                int y = area.getPos()[1] * data.tileSize;
+                int w = area.getDim()[0] * data.tileSize;
+                int h = area.getDim()[1] * data.tileSize;
                 if (mouseX >= x && mouseX <= x + w && mouseY >= y && mouseY <= y + h) {
                     return true;
                 }

@@ -34,8 +34,9 @@ public class RuimteService {
     }
 
     public static void maakGastVrij(SimulationData data, int gastId) {
-        for (Area a : data.areas) {
-            a.currentOccupants.remove(Integer.valueOf(gastId));
+        for (int i = 0; i < data.areas.size(); i++) {
+            Area area = data.areas.get(i);
+            area.currentOccupants.remove(Integer.valueOf(gastId));
         }
     }
 

@@ -28,10 +28,10 @@ public class ReceptionistController {
     public void handleCheckIn(int guestId, int preferredRoomId) {
         // Vraag aan het receptionist-model om een kamer toe te wijzen (geeft een Optional terug)
         receptionist.wijsKamerToe(preferredRoomId, guestId).ifPresent(room -> {
-            Guest g = data.guests.get(guestId);
-            if (g != null) {
-                g.assignedRoomId = room.id; // Koppel het kamer-ID aan de gast
-                sendToReception(g);         // Stuur de gast eerst naar de receptiebalie om de sleutel te halen
+            Guest guest = data.guests.get(guestId);
+            if (guest != null) {
+                guest.assignedRoomId = room.id; // Koppel het kamer-ID aan de gast
+                sendToReception(guest);         // Stuur de gast eerst naar de receptiebalie om de sleutel te halen
             }
         });
     }
@@ -39,29 +39,29 @@ public class ReceptionistController {
     /**
      * Wijzigt het loopdoel (target) van de gast naar het middelpunt van de receptie.
      */
-    public void sendToReception(Guest g) {
+    public void sendToReception(Guest guest) {
         findAreaByType("RECEPTION").ifPresent(rec -> {
             // Bereken het exacte middelpunt van de receptiebalie
             double tx = (rec.getPos()[0] * data.tileSize) + ((rec.getDim()[0] * data.tileSize) / 2.0);
             double ty = (rec.getPos()[1] * data.tileSize) + 25; // +25px speling voor de voeten op de vloer
-            g.setTarget(tx, ty);
+            guest.setTarget(tx, ty);
         });
     }
 
     /**
      * Stuurt een gast vanaf de receptie door naar zijn/haar definitief toegewezen hotelkamer.
      */
-    public void sendToRoom(Guest g) {
+    public void sendToRoom(Guest guest) {
         // Veiligheidscheck: heeft de gast daadwerkelijk een kamer gekregen?
-        if (g.assignedRoomId != -1) {
-            findAreaById(g.assignedRoomId).ifPresent(room -> {
+        if (guest.assignedRoomId != -1) {
+            findAreaById(guest.assignedRoomId).ifPresent(room -> {
                 // Bereken het middelpunt van de toegewezen kamer
                 double tx = (room.getPos()[0] * data.tileSize) + ((room.getDim()[0] * data.tileSize) / 2.0);
                 double ty = (room.getPos()[1] * data.tileSize) + 25;
-                g.setTarget(tx, ty); // Gast gaat nu onderweg naar zijn kamer
+                guest.setTarget(tx, ty); // Gast gaat nu onderweg naar zijn kamer
 
                 if (logPanel != null) {
-                    logPanel.addLog("🔑 Receptie: Gast " + g.id
+                    logPanel.addLog("🔑 Receptie: Gast " + guest.id
                             + " heeft ingecheckt. Kamer " + room.id + " toegewezen.");
                 }
             });

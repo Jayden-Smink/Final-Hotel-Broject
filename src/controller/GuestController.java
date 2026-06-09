@@ -3,6 +3,8 @@ package controller;
 import factory.PersonFactory;
 import model.*;
 import view.LogPanel;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Beheert de basishandelingen van alle gasten, zoals het aanmaken via de factory,
@@ -101,17 +103,19 @@ public class GuestController {
      */
     public void update() {
 
-        for (Guest g : data.guests.values()) {
+        List<Guest> guestList = new ArrayList<>(data.guests.values());
+        for (int i = 0; i < guestList.size(); i++) {
+            Guest guest = guestList.get(i);
 
-            if (g == null) {
+            if (guest == null) {
                 continue;
             }
 
-            if (g.state == GuestState.EXITING_LIFT) {
-                g.state = GuestState.WALKING;
+            if (guest.state == GuestState.EXITING_LIFT) {
+                guest.state = GuestState.WALKING;
             }
 
-            guestMover.moveGuest(g);
+            guestMover.moveGuest(guest);
         }
     }
 
@@ -176,7 +180,8 @@ public class GuestController {
             return null;
         }
 
-        for (Area area : data.areas) {
+        for (int i = 0; i < data.areas.size(); i++) {
+            Area area = data.areas.get(i);
             if (area.AreaType.equalsIgnoreCase(type)) {
                 return area;
             }

@@ -31,35 +31,36 @@ public class GuestLocationHandler {
     public void processLocationLogic() {
         List<Guest> guestList = new ArrayList<>(data.guests.values());
 
-        for (Guest g : guestList) {
+        for (int i = 0; i < guestList.size(); i++) {
+            Guest guest = guestList.get(i);
 
             // Uitcheckende gast heeft de uitgang bereikt
-            if (g.isCheckingOut && g.state == GuestState.AT_DESTINATION
-                    && Math.abs(g.x - 20.0) < 15) {
+            if (guest.isCheckingOut && guest.state == GuestState.AT_DESTINATION
+                    && Math.abs(guest.x - 20.0) < 15) {
 
-                handleGuestExit(g);
+                handleGuestExit(guest);
                 continue;
             }
 
-            if (g.state == GuestState.AT_DESTINATION) {
+            if (guest.state == GuestState.AT_DESTINATION) {
 
                 // Situatie A: Gast staat bij de receptie
-                if (isAtArea(g, "RECEPTION") && !g.isCheckingOut) {
-                    handleReceptionArrival(g);
+                if (isAtArea(guest, "RECEPTION") && !guest.isCheckingOut) {
+                    handleReceptionArrival(guest);
                 }
                 // Situatie B: Gast is aangekomen bij zijn eigen kamer
-                else if (isAtAssignedRoom(g) && g.currentActivity.equals("WALKING_TO_ROOM")) {
-                    g.state = GuestState.IDLE;
-                    g.isInRoom = true;
-                    g.currentActivity = "ROOM";
-                    g.activityTimer = 0;
+                else if (isAtAssignedRoom(guest) && guest.currentActivity.equals("WALKING_TO_ROOM")) {
+                    guest.state = GuestState.IDLE;
+                    guest.isInRoom = true;
+                    guest.currentActivity = "ROOM";
+                    guest.activityTimer = 0;
                 }
                 // Situatie C: Gast is aangekomen bij een faciliteit
-                else if (g.currentActivity.equals("WALKING_TO_FACILITY")) {
-                    g.state = GuestState.IDLE;
-                    g.isInRoom = false;
-                    g.currentActivity = "USING_FACILITY";
-                    g.activityTimer = 0;
+                else if (guest.currentActivity.equals("WALKING_TO_FACILITY")) {
+                    guest.state = GuestState.IDLE;
+                    guest.isInRoom = false;
+                    guest.currentActivity = "USING_FACILITY";
+                    guest.activityTimer = 0;
                 }
             }
         }
@@ -68,17 +69,19 @@ public class GuestLocationHandler {
     /**
      * Verwijdert de gast uit het hotel en wijst zijn kamer toe aan de minst drukke schoonmaker.
      */
-    private void handleGuestExit(Guest g) {
-        int roomId = g.assignedRoomId;
+    private void handleGuestExit(Guest guest) {
+        int roomId = guest.assignedRoomId;
 
-        roomController.maakGastVrij(data, g.id);
-        data.guests.remove(g.id);
+        roomController.maakGastVrij(data, guest.id);
+        data.guests.remove(guest.id);
 
         if (roomId != -1 && !data.cleaners.isEmpty()) {
             Cleaner bestCleaner = null;
-            for (Cleaner c : data.cleaners.values()) {
-                if (bestCleaner == null || c.dirtyRooms.size() < bestCleaner.dirtyRooms.size()) {
-                    bestCleaner = c;
+            List<Cleaner> cleanerList = new ArrayList<>(data.cleaners.values());
+            for (int j = 0; j < cleanerList.size(); j++) {
+                Cleaner cleaner = cleanerList.get(j);
+                if (bestCleaner == null || cleaner.dirtyRooms.size() < bestCleaner.dirtyRooms.size()) {
+                    bestCleaner = cleaner;
                 }
             }
             if (bestCleaner != null) {
@@ -89,48 +92,48 @@ public class GuestLocationHandler {
             }
         }
 
-        if (logPanel != null) logPanel.addLog("🚶 Gast " + g.id + " heeft het hotel verlaten.");
+        if (logPanel != null) logPanel.addLog("🚶 Gast " + guest.id + " heeft het hotel verlaten.");
     }
 
     /**
      * Handelt de aankomst bij de receptie af: stuur naar kamer of, als het hotel vol is, naar de uitgang.
      */
-    private void handleReceptionArrival(Guest g) {
-        receptionistController.sendToRoom(g);
+    private void handleReceptionArrival(Guest guest) {
+        receptionistController.sendToRoom(guest);
 
-        if (g.assignedRoomId == -1) {
-            g.isCheckingOut = true;
-            navigator.sendGuestToExit(g);
+        if (guest.assignedRoomId == -1) {
+            guest.isCheckingOut = true;
+            navigator.sendGuestToExit(guest);
             if (logPanel != null) {
-                logPanel.addLog("❌ Receptie: Geen kamer vrij! Gast " + g.id + " moet het hotel verlaten.");
+                logPanel.addLog("❌ Receptie: Geen kamer vrij! Gast " + guest.id + " moet het hotel verlaten.");
             }
         } else {
-            g.isInRoom = false;
-            g.currentActivity = "WALKING_TO_ROOM";
+            guest.isInRoom = false;
+            guest.currentActivity = "WALKING_TO_ROOM";
         }
     }
 
     /**
      * Wiskundige bounding-box check of een gast zich bij een bepaald type ruimte bevindt.
      */
-    private boolean isAtArea(Guest g, String type) {
+    private boolean isAtArea(Guest guest, String type) {
         return data.areas.stream().anyMatch(a -> {
             if (!a.AreaType.equalsIgnoreCase(type)) return false;
             int areaX = a.getPos()[0] * data.tileSize;
             int areaY = a.getPos()[1] * data.tileSize;
-            return g.x >= (areaX - 15) &&
-                    g.x <= (areaX + (a.getDim()[0] * data.tileSize) + 15) &&
-                    g.y >= areaY &&
-                    g.y <= (areaY + (a.getDim()[1] * data.tileSize));
+            return guest.x >= (areaX - 15) &&
+                    guest.x <= (areaX + (a.getDim()[0] * data.tileSize) + 15) &&
+                    guest.y >= areaY &&
+                    guest.y <= (areaY + (a.getDim()[1] * data.tileSize));
         });
     }
 
     /**
      * Controleert of de gast dicht genoeg bij zijn kamerdoel staat (binnen 15 pixels marge).
      */
-    private boolean isAtAssignedRoom(Guest g) {
-        if (g.assignedRoomId == -1) return false;
-        return Math.abs(g.x - g.targetX) < 15 &&
-                Math.abs(g.y - g.targetY) < 15;
+    private boolean isAtAssignedRoom(Guest guest) {
+        if (guest.assignedRoomId == -1) return false;
+        return Math.abs(guest.x - guest.targetX) < 15 &&
+                Math.abs(guest.y - guest.targetY) < 15;
     }
 }

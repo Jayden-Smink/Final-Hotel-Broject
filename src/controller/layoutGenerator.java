@@ -41,20 +41,21 @@ public class layoutGenerator {
             int minGridY = Integer.MAX_VALUE;
 
             // Loop door elk tekstblok (elk los hotelonderdeel) heen
-            for (String p : parts) {
-                if (!p.contains("AreaType")) continue; // Sla tekstblokken zonder kamertype over
+            for (int i = 0; i < parts.length; i++) {
+                String part = parts[i];
+                if (!part.contains("AreaType")) continue; // Sla tekstblokken zonder kamertype over
 
                 // Haal de belangrijkste waardes op met de ingebouwde val() helper
-                String typeName = val(p, "AreaType").toUpperCase();
-                String position  = val(p, "Position");
-                String dimension = val(p, "Dimension");
+                String typeName = val(part, "AreaType").toUpperCase();
+                String position  = val(part, "Position");
+                String dimension = val(part, "Dimension");
 
                 if (typeName.isEmpty()) continue;
 
                 // ID-bepaling: gebruik het ID uit het bestand, geef kamers een oplopend nummer, de rest krijgt -1
                 int id;
-                if (p.contains("\"ID\"")) {
-                    id = Integer.parseInt(val(p, "ID").replaceAll("[^0-9]", ""));
+                if (part.contains("\"ID\"")) {
+                    id = Integer.parseInt(val(part, "ID").replaceAll("[^0-9]", ""));
                 } else if (typeName.matches("ROOM|CINEMA|FITNESS|RESTAURANT")) {
                     id = roomCounter++;
                 } else {
@@ -63,22 +64,22 @@ public class layoutGenerator {
 
                 // Maak de specifieke hotelruimte aan via de RoomFactory
                 RoomType type = RoomType.valueOf(typeName);
-                Area a = RoomFactory.createRuimte(type, position, dimension, id);
+                Area area = RoomFactory.createRuimte(type, position, dimension, id);
 
                 // Capaciteit bepalen: lees uit het bestand, of gebruik hardcoded standaarden per type
-                if (p.contains("\"Capacity\"")) {
-                    a.Capacity = Integer.parseInt(val(p, "Capacity").replaceAll("[^0-9]", ""));
+                if (part.contains("\"Capacity\"")) {
+                    area.Capacity = Integer.parseInt(val(part, "Capacity").replaceAll("[^0-9]", ""));
                 } else {
-                    if (typeName.equals("CINEMA"))     a.Capacity = 10;
-                    else if (typeName.equals("RESTAURANT")) a.Capacity = 5;
-                    else a.Capacity = 1; // Standaard hotelkamercapaciteit
+                    if (typeName.equals("CINEMA"))     area.Capacity = 10;
+                    else if (typeName.equals("RESTAURANT")) area.Capacity = 5;
+                    else area.Capacity = 1; // Standaard hotelkamercapaciteit
                 }
 
-                areas.add(a);
+                areas.add(area);
 
                 // Update de uiterste grenzen van het hotel op basis van deze nieuwe ruimte
-                int[] pos = a.getPos();
-                int[] dim = a.getDim();
+                int[] pos = area.getPos();
+                int[] dim = area.getDim();
                 maxGridX = Math.max(maxGridX, pos[0] + dim[0]);
                 maxGridY = Math.max(maxGridY, pos[1] + dim[1]);
                 minGridY = Math.min(minGridY, pos[1]);
@@ -86,11 +87,12 @@ public class layoutGenerator {
 
             // Y-coördinaten omdraaien (Flippen): In bestanden is Verdieping 0 vaak de top,
             // maar in graphics/coördinatenstelsels bouwen we het hotel vanaf de bodem (Lobby) op.
-            for (Area a : areas) {
-                int[] pos = a.getPos();
-                int[] dim = a.getDim();
+            for (int j = 0; j < areas.size(); j++) {
+                Area area = areas.get(j);
+                int[] pos = area.getPos();
+                int[] dim = area.getDim();
                 int flippedY = (maxGridY - minGridY) - pos[1] - dim[1] + minGridY;
-                a.Position = pos[0] + ", " + flippedY; // Sla de gecorrigeerde positie weer op als String
+                area.Position = pos[0] + ", " + flippedY; // Sla de gecorrigeerde positie weer op als String
             }
 
             int flippedMax = maxGridY - minGridY;

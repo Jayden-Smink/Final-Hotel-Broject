@@ -24,20 +24,20 @@ public class GuestNavigator {
     /**
      * Stuurt een gast naar de hoteluitgang (linkerkant van de lobby).
      */
-    public void sendGuestToExit(Guest g) {
+    public void sendGuestToExit(Guest guest) {
         data.areas.stream()
                 .filter(a -> a.AreaType.equalsIgnoreCase("LOBBY"))
                 .findFirst()
                 .ifPresent(lobby -> {
                     double exitY = (lobby.getPos()[1] * data.tileSize) + data.tileSize / 2.0;
-                    g.setTarget(20.0, exitY);
+                    guest.setTarget(20.0, exitY);
                 });
     }
 
     /**
      * Kiest een willekeurige faciliteit en stuurt de gast daarheen.
      */
-    public void sendGuestToRandomFacility(Guest g) {
+    public void sendGuestToRandomFacility(Guest guest) {
         List<String> types = Arrays.asList("RESTAURANT", "CINEMA", "FITNESS");
 
         var facilities = data.areas.stream()
@@ -50,12 +50,12 @@ public class GuestNavigator {
             double targetX = (area.getPos()[0] * data.tileSize) + ((area.getDim()[0] * data.tileSize) / 2.0);
             double targetY = (area.getPos()[1] * data.tileSize) + data.tileSize / 2.0;
 
-            g.currentActivity = "WALKING_TO_FACILITY";
-            g.currentFacility = area.AreaType.toUpperCase();
-            g.setTarget(targetX, targetY);
+            guest.currentActivity = "WALKING_TO_FACILITY";
+            guest.currentFacility = area.AreaType.toUpperCase();
+            guest.setTarget(targetX, targetY);
 
             if (logPanel != null) {
-                logPanel.addLog("🏃 Activiteit: Gast " + g.id + " loopt naar het " + area.AreaType.toLowerCase() + ".");
+                logPanel.addLog("🏃 Activiteit: Gast " + guest.id + " loopt naar het " + area.AreaType.toLowerCase() + ".");
             }
         }
     }
@@ -63,21 +63,21 @@ public class GuestNavigator {
     /**
      * Stuurt de gast terug naar zijn eigen gereserveerde hotelkamer.
      */
-    public void returnGuestToRoom(Guest g) {
-        if (g.assignedRoomId == -1) return;
+    public void returnGuestToRoom(Guest guest) {
+        if (guest.assignedRoomId == -1) return;
 
         data.areas.stream()
-                .filter(a -> a.id == g.assignedRoomId)
+                .filter(a -> a.id == guest.assignedRoomId)
                 .findFirst()
                 .ifPresent(room -> {
                     double targetX = (room.getPos()[0] * data.tileSize) + ((room.getDim()[0] * data.tileSize) / 2.0);
                     double targetY = (room.getPos()[1] * data.tileSize) + data.tileSize / 2.0;
 
-                    g.currentActivity = "WALKING_TO_ROOM";
-                    g.setTarget(targetX, targetY);
+                    guest.currentActivity = "WALKING_TO_ROOM";
+                    guest.setTarget(targetX, targetY);
 
                     if (logPanel != null) {
-                        logPanel.addLog("🛏️ Terugkeer: Gast " + g.id + " loopt terug naar hotelkamer " + g.assignedRoomId + ".");
+                        logPanel.addLog("🛏️ Terugkeer: Gast " + guest.id + " loopt terug naar hotelkamer " + guest.assignedRoomId + ".");
                     }
                 });
     }
