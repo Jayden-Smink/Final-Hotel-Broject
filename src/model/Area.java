@@ -1,6 +1,5 @@
 package model;
 
-import com.google.gson.annotations.SerializedName;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -13,12 +12,7 @@ public class Area {
 
     public String classification;
 
-    /*
-     * Jouw JSON gebruikt "Capacity" met hoofdletter C.
-     * Deze annotation zorgt dat Gson dat correct inleest in area.capacity.
-     */
-    @SerializedName("Capacity")
-    public int capacity = 1;
+    public int Capacity = 1;
 
     public List<Integer> currentOccupants = new ArrayList<>();
 
@@ -39,6 +33,6 @@ public class Area {
     }
 
     public boolean isFull() {
-        return currentOccupants.size() >= capacity;
+        return currentOccupants.size() >= Capacity;
     }
 }

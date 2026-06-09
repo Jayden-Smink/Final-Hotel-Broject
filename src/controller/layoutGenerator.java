@@ -67,11 +67,11 @@ public class layoutGenerator {
 
                 // Capaciteit bepalen: lees uit het bestand, of gebruik hardcoded standaarden per type
                 if (p.contains("\"Capacity\"")) {
-                    a.capacity = Integer.parseInt(val(p, "Capacity").replaceAll("[^0-9]", ""));
+                    a.Capacity = Integer.parseInt(val(p, "Capacity").replaceAll("[^0-9]", ""));
                 } else {
-                    if (typeName.equals("CINEMA"))     a.capacity = 10;
-                    else if (typeName.equals("RESTAURANT")) a.capacity = 5;
-                    else a.capacity = 1; // Standaard hotelkamercapaciteit
+                    if (typeName.equals("CINEMA"))     a.Capacity = 10;
+                    else if (typeName.equals("RESTAURANT")) a.Capacity = 5;
+                    else a.Capacity = 1; // Standaard hotelkamercapaciteit
                 }
 
                 areas.add(a);
