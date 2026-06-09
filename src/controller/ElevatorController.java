@@ -57,11 +57,9 @@ public class ElevatorController {
 
             if (waitingGuest.elevatorWaitTimer >= data.guestSettings.getElevatorWaitTimeout()) {
                 elevator.waitingGuests.remove(i);
-                waitingGuest.elevatorWaitTimer = 0;
-                waitingGuest.forceStairs = true;
-                waitingGuest.state = GuestState.WALKING;
+                data.guests.remove(waitingGuest.id);
 
-                if (logPanel != null) logPanel.addLog("😤 Gast " + waitingGuest.id + " geeft op en neemt de trap.");
+                if (logPanel != null) logPanel.addLog("💀 Gast " + waitingGuest.id + " is gestorven in de liftwachtrij.");
             }
         }
     }

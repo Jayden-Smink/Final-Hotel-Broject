@@ -19,7 +19,7 @@ public class SimulationData {
     public SimulationData(List<Area> areas, int capacity, int cleaningSeconds, int cinemaDurationSeconds, int restaurantDurationSeconds, int fitnessDurationSeconds) {
         this.areas = areas;
         this.cleanerSettings = new CleanerSettings(cleaningSeconds);
-        this.guestSettings = new GuestSettings(15);
+        this.guestSettings = new GuestSettings(60);
 
         int bottomFloor = 0;
         for (int i = 0; i < areas.size(); i++) {
