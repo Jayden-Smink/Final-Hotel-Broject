@@ -23,13 +23,4 @@ public class FacilitySettings {
         return fitnessDurationSeconds * 60;
     }
 
-    // Getters and setters
-    public int getCinemaDurationSeconds() { return cinemaDurationSeconds; }
-    public void setCinemaDurationSeconds(int s) { this.cinemaDurationSeconds = s; }
-
-    public int getRestaurantDurationSeconds() { return restaurantDurationSeconds; }
-    public void setRestaurantDurationSeconds(int s) { this.restaurantDurationSeconds = s; }
-
-    public int getFitnessDurationSeconds() { return fitnessDurationSeconds; }
-    public void setFitnessDurationSeconds(int s) { this.fitnessDurationSeconds = s; }
 }
