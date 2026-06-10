@@ -18,7 +18,7 @@ class StairModelTest {
         a.AreaType = "TRAP";
         a.Position = pos;
         a.Dimension = "1,1";
-        a.capacity = 100;
+        a.Capacity = 100;
         return a;
     }
 

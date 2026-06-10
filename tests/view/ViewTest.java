@@ -78,7 +78,7 @@ class TimeControlPanelTest {
         a.AreaType = type;
         a.Position = pos;
         a.Dimension = "2,1";
-        a.capacity = 50;
+        a.Capacity = 50;
         return a;
     }
 

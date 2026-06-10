@@ -16,7 +16,7 @@ class AreaTest {
         area.AreaType = "ROOM";
         area.Position = "3,2";
         area.Dimension = "2,1";
-        area.capacity = 3;
+        area.Capacity = 3;
     }
 
     // ── getPos ────────────────────────────────────────────────────────────────
@@ -97,7 +97,7 @@ class AreaTest {
 
     @Test
     void isFull_capacityOneBecomesFullAfterOneOccupant() {
-        area.capacity = 1;
+        area.Capacity = 1;
         area.currentOccupants.add(99);
         assertTrue(area.isFull());
     }
@@ -106,7 +106,7 @@ class AreaTest {
 
     @Test
     void defaultCapacityIsOne() {
-        assertEquals(1, new Area().capacity);
+        assertEquals(1, new Area().Capacity);
     }
 
     @Test

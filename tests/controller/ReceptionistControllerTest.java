@@ -20,7 +20,7 @@ class ReceptionistControllerTest {
         a.AreaType = type;
         a.Position = pos;
         a.Dimension = "2,1";
-        a.capacity = cap;
+        a.Capacity = cap;
         return a;
     }
 

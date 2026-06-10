@@ -24,7 +24,7 @@ class RouteCalculatorTest {
         a.AreaType = type;
         a.Position = pos;
         a.Dimension = "2,1";
-        a.capacity = 10;
+        a.Capacity = 10;
         return a;
     }
 
