@@ -52,6 +52,19 @@ public class TimeControlPanel extends JPanel {
             stopwatchTimer.setSpeed(hte.getSpeed());
         });
 
+        JButton minus50Btn = new JButton("⏪ -50");
+        JButton plus50Btn  = new JButton("⏩ +50");
+
+        minus50Btn.addActionListener(e -> {
+            hte.setSpeed(hte.getSpeed() - 50);
+            stopwatchTimer.setSpeed(hte.getSpeed());
+        });
+
+        plus50Btn.addActionListener(e -> {
+            hte.setSpeed(hte.getSpeed() + 50);
+            stopwatchTimer.setSpeed(hte.getSpeed());
+        });
+
         timerLabel = new JLabel(stopwatchDisplay.zero());
         timerLabel.setFont(new Font("Monospaced", Font.BOLD, 14));
         timerLabel.setForeground(new Color(0, 180, 100));
@@ -60,6 +73,8 @@ public class TimeControlPanel extends JPanel {
         add(pauseBtn);
         add(slowerBtn);
         add(fasterBtn);
+        add(minus50Btn);
+        add(plus50Btn);
         add(timerLabel);
 
         stopwatchTimer.start();
