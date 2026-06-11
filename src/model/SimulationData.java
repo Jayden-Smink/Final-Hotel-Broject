@@ -1,16 +1,17 @@
 package model;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class SimulationData {
     public List<Area> areas;
     public Elevator elevator;
-    public Map<Integer, Guest> guests = new HashMap<>();
+    public Map<Integer, Guest> guests = new ConcurrentHashMap<>();
     public int tileSize = 60;
     public int horizontalOffset = 60;
 
     public int numberOfCleaners = 2;
-    public Map<Integer, Cleaner> cleaners = new HashMap<>();
+    public Map<Integer, Cleaner> cleaners = new ConcurrentHashMap<>();
 
     public CleanerSettings cleanerSettings;
     public GuestSettings guestSettings;

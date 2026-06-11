@@ -111,7 +111,11 @@ public class SimulationController implements HotelEventListener {
 
             // SPECIALE EVENTS:
             case EVACUATE:
-                if (logPanel != null) logPanel.addLog("🚨 EVACUATIE!");
+                for (int i = 0; i <= 10; i++){
+                    System.out.println("🚨 EVACUATIE!");
+                }
+                guestActivityController.evacuateAllGuests();
+                if (logPanel != null) logPanel.addLog("🚨 EVACUATIE! Alle gasten verlaten het hotel.");
                 break;
 
             case GODZILLA:

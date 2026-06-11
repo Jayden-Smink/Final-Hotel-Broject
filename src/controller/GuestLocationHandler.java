@@ -34,10 +34,15 @@ public class GuestLocationHandler {
         for (int i = 0; i < guestList.size(); i++) {
             Guest guest = guestList.get(i);
 
+            // Dode gast: kamer vrijmaken en verwijderen
+            if (guest.isDead) {
+                freeRoomAndAssignCleaner(guest);
+                continue;
+            }
+
             // Uitcheckende gast heeft de uitgang bereikt
             if (guest.isCheckingOut && guest.state == GuestState.AT_DESTINATION
                     && Math.abs(guest.x - 20.0) < 15) {
-
                 handleGuestExit(guest);
                 continue;
             }
@@ -70,6 +75,15 @@ public class GuestLocationHandler {
      * Verwijdert de gast uit het hotel en wijst zijn kamer toe aan de minst drukke schoonmaker.
      */
     private void handleGuestExit(Guest guest) {
+        freeRoomAndAssignCleaner(guest);
+        if (logPanel != null) logPanel.addLog("🚶 Gast " + guest.id + " heeft het hotel verlaten.");
+    }
+
+    /**
+     * Gedeelde logica: maakt de kamer vrij, verwijdert de gast uit de simulatie,
+     * en wijst de kamer toe aan de minst bezette schoonmaker.
+     */
+    private void freeRoomAndAssignCleaner(Guest guest) {
         int roomId = guest.assignedRoomId;
 
         roomController.maakGastVrij(data, guest.id);
@@ -91,8 +105,6 @@ public class GuestLocationHandler {
                 }
             }
         }
-
-        if (logPanel != null) logPanel.addLog("🚶 Gast " + guest.id + " heeft het hotel verlaten.");
     }
 
     /**

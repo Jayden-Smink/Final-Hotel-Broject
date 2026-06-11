@@ -32,6 +32,25 @@ public class GuestActivityController {
     }
 
     /**
+     * Stuurt alle levende gasten direct naar de uitgang via de trap.
+     * Wordt aangeroepen bij een evacuatie-event.
+     */
+    public void evacuateAllGuests() {
+        List<Guest> guestList = new ArrayList<>(data.guests.values());
+        for (int i = 0; i < guestList.size(); i++) {
+            Guest guest = guestList.get(i);
+            if (!guest.isDead) {
+                guest.isCheckingOut = true;
+                guest.forceStairs = true;
+                if (data.elevator != null) {
+                    data.elevator.waitingGuests.remove(guest);
+                }
+                navigator.sendGuestToExit(guest);
+            }
+        }
+    }
+
+    /**
      * Regelt de timers van stilstaande (IDLE) gasten en stuurt ze na verloop van tijd ergens anders heen.
      */
     private void handleDynamicGuestActivities() {
@@ -66,10 +85,10 @@ public class GuestActivityController {
     private int getFacilityDuration(Guest guest) {
         if (guest.currentActivity.equals("USING_FACILITY")) {
             switch (guest.currentFacility) {
-                case "CINEMA":   return data.facilitySettings.getCinemaDurationFrames();
+                case "CINEMA":     return data.facilitySettings.getCinemaDurationFrames();
                 case "RESTAURANT": return data.facilitySettings.getRestaurantDurationFrames();
-                case "FITNESS":  return data.facilitySettings.getFitnessDurationFrames();
-                default:         return 300;
+                case "FITNESS":    return data.facilitySettings.getFitnessDurationFrames();
+                default:           return 300;
             }
         }
         return 300;
