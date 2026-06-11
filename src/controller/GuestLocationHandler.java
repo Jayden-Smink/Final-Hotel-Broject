@@ -117,15 +117,19 @@ public class GuestLocationHandler {
      * Wiskundige bounding-box check of een gast zich bij een bepaald type ruimte bevindt.
      */
     private boolean isAtArea(Guest guest, String type) {
-        return data.areas.stream().anyMatch(a -> {
-            if (!a.AreaType.equalsIgnoreCase(type)) return false;
-            int areaX = a.getPos()[0] * data.tileSize;
-            int areaY = a.getPos()[1] * data.tileSize;
-            return guest.x >= (areaX - 15) &&
-                    guest.x <= (areaX + (a.getDim()[0] * data.tileSize) + 15) &&
+        for (int i = 0; i < data.areas.size(); i++) {
+            Area area = data.areas.get(i);
+            if (!area.AreaType.equalsIgnoreCase(type)) continue;
+            int areaX = area.getPos()[0] * data.tileSize;
+            int areaY = area.getPos()[1] * data.tileSize;
+            if (guest.x >= (areaX - 15) &&
+                    guest.x <= (areaX + (area.getDim()[0] * data.tileSize) + 15) &&
                     guest.y >= areaY &&
-                    guest.y <= (areaY + (a.getDim()[1] * data.tileSize));
-        });
+                    guest.y <= (areaY + (area.getDim()[1] * data.tileSize))) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
