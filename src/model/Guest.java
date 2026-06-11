@@ -13,6 +13,7 @@ public class Guest extends Person {
     public int elevatorWaitTimer = 0;  // hoe lang de gast al wacht op de lift
     public boolean forceStairs = false; // geeft op en neemt de trap
     public int waitingOnFloor = -1;
+    public boolean isDead = false;
 
     public Guest(int id, double x, double y) {
         super(id, x, y);

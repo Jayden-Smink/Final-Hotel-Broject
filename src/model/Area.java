@@ -15,6 +15,9 @@ public class Area {
     public int Capacity = 1;
 
     public List<Integer> currentOccupants = new ArrayList<>();
+    public boolean isDestroyed = false;
+    public boolean isOnFire = false;
+    public int fireTimer = 0;
 
     public int[] getPos() {
         String[] p = Position.split(",");
