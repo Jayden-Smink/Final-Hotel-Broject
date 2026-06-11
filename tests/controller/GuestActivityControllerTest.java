@@ -43,7 +43,7 @@ class GuestActivityControllerTest {
         areas.add(makeArea(20, "RESTAURANT", "3,3", 10));
         areas.add(makeArea(21, "CINEMA", "5,3", 10));
         areas.add(makeArea(22, "FITNESS", "7,3", 10));
-        data = new SimulationData(areas, 4, 30, 30, 10, 15);
+        data = new SimulationData(areas, 4, 30, 30, 10, 15, 60);
         ReceptionistController receptionistController = new ReceptionistController(data, null);
         controller = new GuestActivityController(data, receptionistController, null);
     }

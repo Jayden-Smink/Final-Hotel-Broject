@@ -16,7 +16,7 @@ class RoomOverviewPanelTest {
     @BeforeEach
     void setUp() {
         List<Area> areas = Arrays.asList(makeLobby(), makeRoom(1), makeRoom(2));
-        data = new SimulationData(areas, 4, 1, 60, 60, 60);
+        data = new SimulationData(areas, 4, 1, 60, 60, 60, 60);
     }
 
     // ── construction ──────────────────────────────────────────────────────────
@@ -29,14 +29,14 @@ class RoomOverviewPanelTest {
     @Test
     void constructor_withNoRooms_doesNotThrow() {
         List<Area> noRooms = Arrays.asList(makeLobby());
-        SimulationData d = new SimulationData(noRooms, 4, 1, 60, 60, 60);
+        SimulationData d = new SimulationData(noRooms, 4, 1, 60, 60, 60, 60);
         assertDoesNotThrow(() -> new RoomOverviewPanel(d));
     }
 
     @Test
     void constructor_withEmptyAreasList_doesNotThrow() {
         List<Area> mutableAreas = new java.util.ArrayList<>(Arrays.asList(makeLobby()));
-        SimulationData d = new SimulationData(mutableAreas, 4, 1, 60, 60, 60);
+        SimulationData d = new SimulationData(mutableAreas, 4, 1, 60, 60, 60, 60);
         d.areas.clear();
         assertDoesNotThrow(() -> new RoomOverviewPanel(d));
     }

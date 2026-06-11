@@ -52,8 +52,7 @@ public class SimulationRenderer {
     private void loadAssets() {
         String[] typesToLoad = {
                 "ROOM", "CINEMA", "RESTAURANT", "FITNESS",
-                "LOBBY", "RECEPTION", "STAIRS", "ELEVATOR-SHAFT", "ELEVATOR",
-                "BACKROOMS"
+                "LOBBY", "RECEPTION", "STAIRS", "ELEVATOR-SHAFT", "ELEVATOR"
         };
 
         for (int i = 0; i < typesToLoad.length; i++) {

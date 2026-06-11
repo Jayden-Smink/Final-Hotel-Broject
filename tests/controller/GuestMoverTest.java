@@ -41,7 +41,7 @@ class GuestMoverTest {
         List<Area> areas = new ArrayList<>();
         areas.add(makeArea(0, "LOBBY", "0,5"));
         areas.add(makeArea(1, "TRAP", "3,0"));
-        data = new SimulationData(areas, 4, 30, 30, 10, 15);
+        data = new SimulationData(areas, 4, 30, 30, 10, 15, 60);
         data.tileSize = TILE;
         data.horizontalOffset = OFFSET;
         mover = new GuestMover(data, new StairModel(data.areas));

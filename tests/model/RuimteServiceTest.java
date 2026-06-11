@@ -27,7 +27,7 @@ class RuimteServiceTest {
     void setUp() {
         List<Area> areas = new ArrayList<>();
         areas.add(makeArea(0, "LOBBY", "0,5", 50));
-        data = new SimulationData(areas, 10, 30, 30, 10, 15);
+        data = new SimulationData(areas, 10, 30, 30, 10, 15, 60);
     }
 
     // ── reserveerVrijeKamer ───────────────────────────────────────────────────

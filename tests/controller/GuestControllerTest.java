@@ -31,7 +31,7 @@ class GuestControllerTest {
         areas.add(makeArea(0, "LOBBY", "0,5", 50));
         areas.add(makeArea(1, "RECEPTION", "2,5", 10));
         areas.add(makeArea(10, "ROOM", "1,2", 5));
-        data = new SimulationData(areas, 4, 30, 30, 10, 15);
+        data = new SimulationData(areas, 4, 30, 30, 10, 15, 60);
         receptionistController = new ReceptionistController(data, null);
         controller = new GuestController(data, null, receptionistController);
     }

@@ -31,7 +31,7 @@ class SimulationControllerTest {
     @BeforeEach
     void setUp() {
         List<Area> areas = Arrays.asList(makeLobby(), makeRoom(1), makeRoom(2));
-        data = new SimulationData(areas, 4, 1, 60, 60, 60);
+        data = new SimulationData(areas, 4, 1, 60, 60, 60, 60);
         data.cleaners.put(1, new Cleaner(1, 60, 25));
 
         // Scenario 0 → no automatic events during unit tests
@@ -43,7 +43,7 @@ class SimulationControllerTest {
     @Test
     void constructor_doesNotThrow() {
         List<Area> areas = Arrays.asList(makeLobby(), makeRoom(1));
-        SimulationData d = new SimulationData(areas, 4, 1, 60, 60, 60);
+        SimulationData d = new SimulationData(areas, 4, 1, 60, 60, 60, 60);
         d.cleaners.put(1, new Cleaner(1, 60, 25));
 
         assertDoesNotThrow(() -> new SimulationController(d, null, 0));
@@ -52,7 +52,7 @@ class SimulationControllerTest {
     @Test
     void constructor_withLogPanel_doesNotThrow() {
         List<Area> areas = Arrays.asList(makeLobby(), makeRoom(1));
-        SimulationData d = new SimulationData(areas, 4, 1, 60, 60, 60);
+        SimulationData d = new SimulationData(areas, 4, 1, 60, 60, 60, 60);
         d.cleaners.put(1, new Cleaner(1, 60, 25));
         view.LogPanel log = new view.LogPanel();
 

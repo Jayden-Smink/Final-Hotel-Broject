@@ -39,18 +39,18 @@ class SimulationPanelTest {
 
     @Test
     void constructor_withMultipleCleaners_doesNotThrow() {
-        assertDoesNotThrow(() -> buildPanel(areas, 4, 1, 3, 0, 60, 60, 60));
+        assertDoesNotThrow(() -> buildPanel(areas, 4, 1, 3, 0, 60, 60, 60, 60));
     }
 
     @Test
     void constructor_withZeroCleaners_doesNotThrow() {
-        assertDoesNotThrow(() -> buildPanel(areas, 4, 1, 0, 0, 60, 60, 60));
+        assertDoesNotThrow(() -> buildPanel(areas, 4, 1, 0, 0, 60, 60, 60, 60));
     }
 
     @Test
     void constructor_withNoRoomAreas_doesNotThrow() {
         List<Area> lobbyOnly = Arrays.asList(makeLobby());
-        assertDoesNotThrow(() -> buildPanel(lobbyOnly, 4, 1, 1, 0, 60, 60, 60));
+        assertDoesNotThrow(() -> buildPanel(lobbyOnly, 4, 1, 1, 0, 60, 60, 60, 60));
     }
 
     // ── createBottomPanel ────────────────────────────────────────────────────
@@ -86,7 +86,7 @@ class SimulationPanelTest {
     // ── helpers ───────────────────────────────────────────────────────────────
 
     private SimulationPanel buildPanel() {
-        return buildPanel(areas, 4, 1, 1, 0, 60, 60, 60);
+        return buildPanel(areas, 4, 1, 1, 0, 60, 60, 60, 60);
     }
 
     private SimulationPanel buildPanel(
@@ -97,7 +97,8 @@ class SimulationPanelTest {
             int selectedScenario,
             int cinemaDurationSeconds,
             int restaurantDurationSeconds,
-            int fitnessDurationSeconds
+            int fitnessDurationSeconds,
+            int elevatorWaitSeconds
     ) {
         return new SimulationPanel(
                 areas,
@@ -107,7 +108,8 @@ class SimulationPanelTest {
                 selectedScenario,
                 cinemaDurationSeconds,
                 restaurantDurationSeconds,
-                fitnessDurationSeconds
+                fitnessDurationSeconds,
+                elevatorWaitSeconds
         );
     }
 

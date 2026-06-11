@@ -41,7 +41,7 @@ class ElevatorControllerTest {
     void setUp() {
         List<Area> areas = new ArrayList<>();
         areas.add(makeArea(0, "LOBBY", "0,0")); // pos y=0 → lift start op verdieping 0
-        data = new SimulationData(areas, 4, 30, 30, 10, 15);
+        data = new SimulationData(areas, 4, 30, 30, 10, 15, 60);
         controller = new ElevatorController(data, null);
     }
 

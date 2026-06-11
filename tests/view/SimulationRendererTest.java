@@ -28,7 +28,7 @@ class SimulationRendererTest {
                 makeArea("LIFTSCHACHT", 0, 0),
                 makeArea("TRAP", 6, 0)
         );
-        data = new SimulationData(areas, 4, 1, 60, 60, 60);
+        data = new SimulationData(areas, 4, 1, 60, 60, 60, 60);
         data.cleaners.put(1, new Cleaner(1, 60, 25));
         cleanerController = new CleanerController(data, null);
 

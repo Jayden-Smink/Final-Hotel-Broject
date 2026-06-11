@@ -27,7 +27,7 @@ class GameLoopTest {
     @BeforeEach
     void setUp() {
         List<Area> areas = Arrays.asList(makeLobby(), makeRoom(1));
-        data = new SimulationData(areas, 4, 1, 60, 60, 60);
+        data = new SimulationData(areas, 4, 1, 60, 60, 60, 60);
         data.cleaners.put(1, new Cleaner(1, 60, 25));
         hte = new HotelTimeEngine();
         controller = new SimulationController(data, null, 0);

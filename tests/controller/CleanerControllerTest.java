@@ -41,7 +41,7 @@ class CleanerControllerTest {
         List<Area> areas = Arrays.asList(makeLobby(0, 0), makeRoom(1, 2, 1), makeRoom(2, 4, 2));
 
         // Use the real constructor: (areas, capacity, cleaningSeconds, cinema, restaurant, fitness)
-        data = new SimulationData(areas, 4, 1, 60, 60, 60);
+        data = new SimulationData(areas, 4, 1, 60, 60, 60, 60);
 
         data.cleaners.put(1, makeCleaner(1));
         data.cleaners.put(2, makeCleaner(2));

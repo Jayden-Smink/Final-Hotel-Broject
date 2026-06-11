@@ -32,7 +32,7 @@ class GuestLocationHandlerTest {
         areas.add(makeArea(1, "RECEPTION", "2,5", 10));
         areas.add(makeArea(10, "ROOM", "1,2", 5));
         areas.add(makeArea(20, "RESTAURANT", "3,3", 10));
-        data = new SimulationData(areas, 4, 30, 30, 10, 15);
+        data = new SimulationData(areas, 4, 30, 30, 10, 15, 60);
 
         receptionistController = new ReceptionistController(data, null);
         GuestNavigator navigator = new GuestNavigator(data, null);
