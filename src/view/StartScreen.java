@@ -17,6 +17,7 @@ public class StartScreen extends JFrame {
     private int cinemaDurationSeconds = 30;
     private int restaurantDurationSeconds = 10;
     private int fitnessDurationSeconds = 15;
+    private int elevatorWaitSeconds = 60;
 
     public StartScreen() {
         setUndecorated(true);
@@ -56,6 +57,7 @@ public class StartScreen extends JFrame {
                 cinemaDurationSeconds = dialog.getCinemaDurationSeconds();
                 restaurantDurationSeconds = dialog.getRestaurantDurationSeconds();
                 fitnessDurationSeconds = dialog.getFitnessDurationSeconds();
+                elevatorWaitSeconds = dialog.getElevatorWaitSeconds();
             }
         });
 
@@ -67,7 +69,9 @@ public class StartScreen extends JFrame {
                 selectedScenario,
                 cinemaDurationSeconds,
                 restaurantDurationSeconds,
-                fitnessDurationSeconds
+                fitnessDurationSeconds,
+                elevatorWaitSeconds
+
         ));
 
         quitBtn.addActionListener(e -> System.exit(0));

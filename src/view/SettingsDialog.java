@@ -9,6 +9,7 @@ public class SettingsDialog extends JDialog {
     private final JSpinner cinemaSpinner;
     private final JSpinner restaurantSpinner;
     private final JSpinner fitnessSpinner;
+    private final JSpinner elevatorWaitSpinner;
     private final JComboBox<String> scenarioComboBox;
     private boolean confirmed = false;
 
@@ -49,6 +50,10 @@ public class SettingsDialog extends JDialog {
         content.add(createRow("Fitnessduur (HTE):", fitnessSpinner));
         content.add(Box.createVerticalStrut(10));
 
+        // Guest wachttijd
+        elevatorWaitSpinner = new JSpinner(new SpinnerNumberModel(60, 1, 300, 1));
+        content.add(createRow("Max wachttijd lift (HTE):", elevatorWaitSpinner));
+
         // Scenario
         scenarioComboBox = new JComboBox<>(new String[]{"Scenario 1", "Scenario 2", "Scenario 3", "Scenario 4"});
         if (currentScenario >= 1 && currentScenario <= 4) scenarioComboBox.setSelectedIndex(currentScenario - 1);
@@ -81,4 +86,6 @@ public class SettingsDialog extends JDialog {
     public int getFitnessDurationSeconds() { return (int) fitnessSpinner.getValue(); }
     public int getSelectedScenario() { return scenarioComboBox.getSelectedIndex() + 1; }
     public boolean isConfirmed() { return confirmed; }
+    public int getElevatorWaitSeconds() { return (int) elevatorWaitSpinner.getValue();
+    }
 }

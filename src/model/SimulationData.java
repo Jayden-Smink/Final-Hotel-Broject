@@ -16,10 +16,10 @@ public class SimulationData {
     public GuestSettings guestSettings;
     public FacilitySettings facilitySettings;
 
-    public SimulationData(List<Area> areas, int capacity, int cleaningSeconds, int cinemaDurationSeconds, int restaurantDurationSeconds, int fitnessDurationSeconds) {
+    public SimulationData(List<Area> areas, int capacity, int cleaningSeconds, int cinemaDurationSeconds, int restaurantDurationSeconds, int fitnessDurationSeconds, int elevatorWaitSeconds) {
         this.areas = areas;
         this.cleanerSettings = new CleanerSettings(cleaningSeconds);
-        this.guestSettings = new GuestSettings(15);
+        this.guestSettings = new GuestSettings(elevatorWaitSeconds);
 
         // Zoek de onderste verdieping via een gewone for loop
         int bottomFloor = 0;

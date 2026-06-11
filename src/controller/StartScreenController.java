@@ -19,7 +19,7 @@ public class StartScreenController {
 
     // METHODE-HANDTEKENING AANGEPAST: int cleanerCount is nu toegevoegd als 4e parameter
     public void handleStart(JFrame parent, int capacity, int cleaningSeconds, int cleanerCount, int selectedScenario,
-                            int cinemaDurationSeconds, int restaurantDurationSeconds, int fitnessDurationSeconds) {
+                            int cinemaDurationSeconds, int restaurantDurationSeconds, int fitnessDurationSeconds, int elevatorWaitSeconds) {
 
         // 1. FILE PICKER
         JFileChooser chooser = new JFileChooser();
@@ -64,7 +64,8 @@ public class StartScreenController {
                 selectedScenario,
                 cinemaDurationSeconds,
                 restaurantDurationSeconds,
-                fitnessDurationSeconds
+                fitnessDurationSeconds,
+                elevatorWaitSeconds
         );
 
         JFrame frame = new JFrame("Hotel Simulator");

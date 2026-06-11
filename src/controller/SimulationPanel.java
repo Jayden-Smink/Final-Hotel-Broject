@@ -33,7 +33,8 @@ public class SimulationPanel extends JPanel {
             int selectedScenario,
             int cinemaDurationSeconds,
             int restaurantDurationSeconds,
-            int fitnessDurationSeconds
+            int fitnessDurationSeconds,
+            int elevatorWaitSeconds
     ) {
         this.data = new SimulationData(
                 areas,
@@ -41,7 +42,8 @@ public class SimulationPanel extends JPanel {
                 cleaningSeconds,
                 cinemaDurationSeconds,
                 restaurantDurationSeconds,
-                fitnessDurationSeconds
+                fitnessDurationSeconds,
+                elevatorWaitSeconds
         );
 
         this.data.numberOfCleaners = cleanerCount;
