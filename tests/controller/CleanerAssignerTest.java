@@ -5,10 +5,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import view.LogPanel;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 class CleanerAssignerTest {
 
@@ -18,8 +18,10 @@ class CleanerAssignerTest {
 
     @BeforeEach
     void setUp() {
-        data = mock(SimulationData.class);
-        logPanel = mock(LogPanel.class);
+        // SimulationData has no no-arg constructor, so we pass a minimal list.
+        // Each test replaces data.areas directly before acting.
+        data = new SimulationData(new ArrayList<>(), 1, 1, 1, 1, 1, 1);
+        logPanel = null;
         assigner = new CleanerAssigner(data, logPanel);
     }
 
@@ -45,8 +47,7 @@ class CleanerAssignerTest {
     void assignToRoom_setsStateAndTarget() {
         Cleaner c = new Cleaner(1, 0, 0);
         Area r = room(1, 2, 3);
-
-        when(data.areas).thenReturn(List.of(r));
+        data.areas = new ArrayList<>(List.of(r));
 
         assigner.assignToRoom(c, 1);
 
@@ -60,8 +61,7 @@ class CleanerAssignerTest {
     void assignToRoom_invalidRoom_doesNothing() {
         Cleaner c = new Cleaner(1, 0, 0);
         Area r = room(2, 1, 1);
-
-        when(data.areas).thenReturn(List.of(r));
+        data.areas = new ArrayList<>(List.of(r));
 
         assigner.assignToRoom(c, 999);
 
@@ -73,8 +73,7 @@ class CleanerAssignerTest {
     void sendToLobby_setsTarget() {
         Cleaner c = new Cleaner(1, 0, 0);
         Area l = lobby(1, 1);
-
-        when(data.areas).thenReturn(List.of(l));
+        data.areas = new ArrayList<>(List.of(l));
 
         assigner.sendToLobby(c);
 
@@ -86,8 +85,7 @@ class CleanerAssignerTest {
     void findFirstRoomId_returnsFirstRoom() {
         Area r1 = room(10, 1, 1);
         Area r2 = room(20, 2, 2);
-
-        when(data.areas).thenReturn(List.of(r1, r2));
+        data.areas = new ArrayList<>(List.of(r1, r2));
 
         int id = assigner.findFirstRoomId();
 
@@ -97,8 +95,7 @@ class CleanerAssignerTest {
     @Test
     void findFirstRoomId_noRooms_returnsMinus1() {
         Area l = lobby(1, 1);
-
-        when(data.areas).thenReturn(List.of(l));
+        data.areas = new ArrayList<>(List.of(l));
 
         int id = assigner.findFirstRoomId();
 

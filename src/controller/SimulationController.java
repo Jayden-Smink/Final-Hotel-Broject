@@ -16,6 +16,8 @@ public class SimulationController implements HotelEventListener {
 
     // HET GEHEUGEN: Bevat de gedeelde data (kamers, gasten, lift) waar alle controllers mee werken.
     private final SimulationData data;
+    int timer = 0;
+
 
     // DE ONDERAANNEMERS (Sub-controllers):
     // Elk van deze controllers is verantwoordelijk voor een specifiek deel van de logica in het hotel.
@@ -35,6 +37,7 @@ public class SimulationController implements HotelEventListener {
         this.data = data;
         this.logPanel = logPanel;
 
+
         // Iedere sub-controller krijgt toegang tot de data en het logpaneel.
         this.elevatorController = new ElevatorController(data, logPanel);
         this.receptionistController = new ReceptionistController(data, logPanel);
@@ -45,6 +48,7 @@ public class SimulationController implements HotelEventListener {
         // Koppel deze controller aan de EventManager zodat we bericht krijgen als er iets gebeurt.
         this.eventManager = new HotelEventManager();
         this.eventManager.register(this);
+        eventManager.setHte(100);
 
         // Start het simulatiescenario (de vooraf bepaalde lijst met events, bijv. "gast komt aan na 2 seconden").
         System.out.println("Gestart scenario: " + selectedScenario);
@@ -58,6 +62,11 @@ public class SimulationController implements HotelEventListener {
      */
     @Override
     public void notify(HotelEvent event) {
+
+
+        timer+= 1;
+        System.out.println(timer);
+
         switch (event.getEventType()) {
 
             // NIEUWE GAST: Geef het gast-ID en de bijbehorende data door aan de GuestController.
@@ -119,6 +128,9 @@ public class SimulationController implements HotelEventListener {
                 break;
 
             case GODZILLA:
+                for (int i = 0; i <= 10; i++){
+                    System.out.println("🦖 GODZILLA ATTACK!");
+                }
                 if (logPanel != null) logPanel.addLog("🦖 GODZILLA ATTACK!");
                 break;
 

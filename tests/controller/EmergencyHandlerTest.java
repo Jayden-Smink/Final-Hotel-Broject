@@ -1,61 +1,112 @@
 package controller;
 
-import model.Cleaner;
-import model.CleanerState;
-import model.SimulationData;
+import model.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import view.LogPanel;
 
-import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.concurrent.ConcurrentHashMap;
 
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 class EmergencyHandlerTest {
 
+    /**
+     * Handmatige nep-implementatie van CleanerAssigner.
+     * Zelfde patroon als in CleanerStateHandlerTest.
+     */
+    static class FakeCleanerAssigner extends CleanerAssigner {
+        String lastCalledMethod = null;
+        Cleaner lastCleaner = null;
+        int lastRoomId = -1;
+        int firstRoomIdToReturn = -1;
+
+        FakeCleanerAssigner(int firstRoomIdToReturn) {
+            super(null, null);
+            this.firstRoomIdToReturn = firstRoomIdToReturn;
+        }
+
+        @Override
+        public void assignToRoom(Cleaner cleaner, int roomId) {
+            lastCalledMethod = "assignToRoom";
+            lastCleaner = cleaner;
+            lastRoomId = roomId;
+        }
+
+        @Override
+        public void sendToLobby(Cleaner cleaner) {
+            lastCalledMethod = "sendToLobby";
+            lastCleaner = cleaner;
+        }
+
+        @Override
+        public int findFirstRoomId() {
+            return firstRoomIdToReturn;
+        }
+    }
+
     private EmergencyHandler handler;
     private SimulationData data;
-    private CleanerAssigner mockAssigner;
-    private LogPanel mockLog;
 
     @BeforeEach
     void setUp() {
-        data = new SimulationData(null, 4, 1, 60, 60, 60, 60);
-        data.cleaners = new HashMap<>(); // Adjust if this is a List/other type
-
-        mockAssigner = mock(CleanerAssigner.class);
-        mockLog = mock(LogPanel.class);
-
-        handler = new EmergencyHandler(data, mockLog, mockAssigner);
+        ArrayList<Area> areas = new ArrayList<>();
+        data = new SimulationData(areas, 4, 1, 60, 60, 60, 60);
+        data.cleaners = new ConcurrentHashMap<>();
     }
 
     @Test
     void testHandle_AssignsIdleCleanerWhenAvailable() {
-        // FIX: Match the constructor of your Cleaner class here
         Cleaner idleCleaner = new Cleaner(1, 1, 1);
         idleCleaner.state = CleanerState.IDLE;
         data.cleaners.put(1, idleCleaner);
 
-        when(mockAssigner.findFirstRoomId()).thenReturn(101);
+        FakeCleanerAssigner fakeAssigner = new FakeCleanerAssigner(101);
+        handler = new EmergencyHandler(data, null, fakeAssigner);
 
         handler.handle(101);
 
-        verify(mockAssigner).assignToRoom(idleCleaner, 101);
+        assertEquals("assignToRoom", fakeAssigner.lastCalledMethod);
+        assertEquals(idleCleaner, fakeAssigner.lastCleaner);
+        assertEquals(101, fakeAssigner.lastRoomId);
     }
 
     @Test
     void testHandle_QueuesRoomForBusyCleanerWhenNoIdleAvailable() {
-        // FIX: Match the constructor of your Cleaner class here
         Cleaner busyCleaner = new Cleaner(1, 1, 1);
         busyCleaner.state = CleanerState.CLEANING;
         data.cleaners.put(1, busyCleaner);
 
-        when(mockAssigner.findFirstRoomId()).thenReturn(202);
+        FakeCleanerAssigner fakeAssigner = new FakeCleanerAssigner(202);
+        handler = new EmergencyHandler(data, null, fakeAssigner);
 
         handler.handle(202);
 
-        // Verification
-        assert(busyCleaner.dirtyRooms.contains(202));
-        verify(mockAssigner, never()).assignToRoom(any(), anyInt());
+        assertTrue(busyCleaner.dirtyRooms.contains(202), "Kamer moet in de wachtrij van de bezette schoonmaker staan");
+        assertNull(fakeAssigner.lastCalledMethod, "assignToRoom mag niet aangeroepen worden als er geen idle schoonmaker is");
+    }
+
+    @Test
+    void testHandle_DoesNothingWhenNoCleanersAvailable() {
+        FakeCleanerAssigner fakeAssigner = new FakeCleanerAssigner(101);
+        handler = new EmergencyHandler(data, null, fakeAssigner);
+
+        handler.handle(101); // geen schoonmakers in data.cleaners
+
+        assertNull(fakeAssigner.lastCalledMethod, "Geen actie als er geen schoonmakers zijn");
+    }
+
+    @Test
+    void testHandle_DoesNothingWhenNoRoomsAvailable() {
+        Cleaner idleCleaner = new Cleaner(1, 1, 1);
+        idleCleaner.state = CleanerState.IDLE;
+        data.cleaners.put(1, idleCleaner);
+
+        FakeCleanerAssigner fakeAssigner = new FakeCleanerAssigner(-1); // geen kamer gevonden
+        handler = new EmergencyHandler(data, null, fakeAssigner);
+
+        handler.handle(999);
+
+        assertNull(fakeAssigner.lastCalledMethod, "Geen actie als findFirstRoomId -1 teruggeeft");
     }
 }

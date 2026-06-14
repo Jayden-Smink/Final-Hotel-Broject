@@ -3,93 +3,149 @@ package controller;
 import model.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
-import view.LogPanel;
 
 import java.util.ArrayList;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 class CleanerStateHandlerTest {
 
+    /**
+     * Handmatige nep-implementatie van CleanerAssigner.
+     * Slaat op welke methode als laatste werd aangeroepen, zodat tests dit kunnen controleren.
+     * Geen Mockito nodig.
+     */
+    static class FakeCleanerAssigner extends CleanerAssigner {
+        String lastCalledMethod = null;
+        Cleaner lastCleaner = null;
+        int lastRoomId = -1;
+
+        FakeCleanerAssigner() {
+            super(null, null); // data en logPanel worden niet gebruikt in de fake
+        }
+
+        @Override
+        public void assignToRoom(Cleaner cleaner, int roomId) {
+            lastCalledMethod = "assignToRoom";
+            lastCleaner = cleaner;
+            lastRoomId = roomId;
+        }
+
+        @Override
+        public void sendToLobby(Cleaner cleaner) {
+            lastCalledMethod = "sendToLobby";
+            lastCleaner = cleaner;
+        }
+    }
+
     private CleanerStateHandler handler;
     private SimulationData data;
-    private CleanerAssigner mockAssigner;
-    private LogPanel mockLog;
+    private FakeCleanerAssigner fakeAssigner;
     private Cleaner worker;
 
     @BeforeEach
     void setUp() {
+        // 1 seconde × 60fps = 60 frames per schoonmaakcyclus
         data = new SimulationData(new ArrayList<>(), 4, 1, 60, 60, 60, 60);
-        // <-- ADJUST: Ensure these exist or instantiate correctly for your model
-        data.cleanerSettings = new CleanerSettings(10); // Example setting for cleaning duration
 
-        mockAssigner = mock(CleanerAssigner.class);
-        mockLog = mock(LogPanel.class);
+        fakeAssigner = new FakeCleanerAssigner();
 
-        handler = new CleanerStateHandler(data, mockLog, mockAssigner);
+        // LogPanel is null-safe in de handler
+        handler = new CleanerStateHandler(data, null, fakeAssigner);
 
-        // Instantiate the worker
-        worker = new Cleaner(1, 1, 1); // <-- ADJUST if Cleaner requires more arguments
+        worker = new Cleaner(1, 0, 0);
         worker.dirtyRooms = new ArrayList<>();
     }
 
     @Test
     void testUpdate_IncrementsTimerWhenCleaning() {
-        // Arrange
         worker.state = CleanerState.CLEANING;
         worker.cleaningTimer = 0;
-        when(data.cleanerSettings.getCleaningDurationFrames()).thenReturn(10);
+        worker.targetX = 999;
+        worker.targetY = 999;
 
-        // Act
         handler.update(worker);
 
-        // Assert
-        assertEquals(1, worker.cleaningTimer, "Timer should increment each update frame");
+        assertEquals(1, worker.cleaningTimer, "Timer moet elke frame met 1 ophogen");
     }
 
     @Test
     void testUpdate_FinishCleaningAssignsNextRoom() {
-        // Arrange
+        // 60 frames is de drempel; timer op 59 zodat één tick hem afrondt
         worker.state = CleanerState.CLEANING;
-        worker.cleaningTimer = 9; // One tick away from finishing
-        when(data.cleanerSettings.getCleaningDurationFrames()).thenReturn(10);
+        worker.cleaningTimer = 59;
+        worker.targetX = 999;
+        worker.targetY = 999;
         worker.dirtyRooms.add(101);
 
-        // Act
         handler.update(worker);
 
-        // Assert
-        verify(mockAssigner).assignToRoom(worker, 101);
-        assertEquals(0, worker.cleaningTimer, "Timer should reset to 0 after finished");
+        assertEquals("assignToRoom", fakeAssigner.lastCalledMethod);
+        assertEquals(101, fakeAssigner.lastRoomId);
+        assertEquals(0, worker.cleaningTimer, "Timer moet resetten na afronding");
+    }
+
+    @Test
+    void testUpdate_FinishCleaning_NoMoreRooms_SendsToLobby() {
+        worker.state = CleanerState.CLEANING;
+        worker.cleaningTimer = 59;
+        worker.targetX = 999;
+        worker.targetY = 999;
+
+        handler.update(worker);
+
+        assertEquals("sendToLobby", fakeAssigner.lastCalledMethod);
+        assertEquals(CleanerState.WALKING_BACK, worker.state);
+        assertEquals(0, worker.cleaningTimer);
     }
 
     @Test
     void testUpdate_HandlesArrivalAtRoom() {
-        // Arrange
         worker.state = CleanerState.WALKING_TO_ROOM;
-        worker.x = 0; worker.y = 0;
-        worker.targetX = 2; worker.targetY = 2; // Inside threshold (< 5)
+        worker.targetX = 2;
+        worker.targetY = 2;
 
-        // Act
         handler.update(worker);
 
-        // Assert
-        assertEquals(CleanerState.CLEANING, worker.state, "Arrival at target should trigger CLEANING state");
+        assertEquals(CleanerState.CLEANING, worker.state, "Aankomst bij kamer moet CLEANING starten");
     }
 
     @Test
-    void testUpdate_ProcessIdleQueue() {
-        // Arrange
-        worker.state = CleanerState.IDLE;
-        worker.dirtyRooms.add(505);
+    void testUpdate_HandlesArrivalAtLobby() {
+        worker.state = CleanerState.WALKING_BACK;
+        worker.assignedRoomId = 5;
+        worker.targetX = 2;
+        worker.targetY = 2;
 
-        // Act
         handler.update(worker);
 
-        // Assert
-        verify(mockAssigner).assignToRoom(worker, 505);
-        assertTrue(worker.dirtyRooms.isEmpty(), "Room should be removed from queue after assignment");
+        assertEquals(CleanerState.IDLE, worker.state, "Aankomst bij lobby moet state IDLE zetten");
+        assertEquals(-1, worker.assignedRoomId, "assignedRoomId moet resetten naar -1");
+    }
+
+    @Test
+    void testUpdate_IdleWithDirtyRooms_AssignsNext() {
+        worker.state = CleanerState.IDLE;
+        worker.targetX = 999;
+        worker.targetY = 999;
+        worker.dirtyRooms.add(505);
+
+        handler.update(worker);
+
+        assertEquals("assignToRoom", fakeAssigner.lastCalledMethod);
+        assertEquals(505, fakeAssigner.lastRoomId);
+        assertTrue(worker.dirtyRooms.isEmpty(), "Kamer moet uit de wachtrij verwijderd worden na toewijzing");
+    }
+
+    @Test
+    void testUpdate_IdleWithNoRooms_DoesNothing() {
+        worker.state = CleanerState.IDLE;
+        worker.targetX = 999;
+        worker.targetY = 999;
+
+        handler.update(worker);
+
+        assertNull(fakeAssigner.lastCalledMethod, "Geen methode mag aangeroepen worden als er geen vuile kamers zijn");
+        assertEquals(CleanerState.IDLE, worker.state);
     }
 }
