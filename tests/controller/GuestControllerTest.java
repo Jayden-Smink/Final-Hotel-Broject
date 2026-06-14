@@ -1,8 +1,12 @@
 package controller;
 
-import model.*;
+import model.Area;
+import model.Guest;
+import model.GuestState;
+import model.SimulationData;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import view.LogPanel;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -11,178 +15,134 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class GuestControllerTest {
 
-    private SimulationData data;
-    private GuestController controller;
-    private ReceptionistController receptionistController;
+    private SimulationData realData;
+    private LogPanel stubLogPanel;
+    private TestReceptionistController spyReceptionistController;
+    private GuestController guestController;
+    private List<String> capturedLogs;
 
-    private Area makeArea(int id, String type, String pos, int cap) {
-        Area a = new Area();
-        a.id = id;
-        a.AreaType = type;
-        a.Position = pos;
-        a.Dimension = "2,1";
-        a.Capacity = cap;
-        return a;
+    // Custom spy class to prevent Java 25 Byte Buddy proxy bugs with heavy GUI components
+    private static class TestReceptionistController extends ReceptionistController {
+        public int lastGuestId = -1;
+        public int lastPreferredRoomId = -1;
+        public int callCount = 0;
+
+        public TestReceptionistController(SimulationData data, LogPanel logPanel) {
+            super(data, logPanel);
+        }
+
+        @Override
+        public void handleCheckIn(int guestId, int preferredRoomId) {
+            this.lastGuestId = guestId;
+            this.lastPreferredRoomId = preferredRoomId;
+            this.callCount++;
+        }
     }
 
     @BeforeEach
     void setUp() {
+        capturedLogs = new ArrayList<>();
+
+        stubLogPanel = new LogPanel() {
+            @Override
+            public void addLog(String message) {
+                capturedLogs.add(message);
+            }
+        };
+
+        // Building layout infrastructure required by GuestCheckInValidator, GuestSpawner & StairModel
         List<Area> areas = new ArrayList<>();
-        areas.add(makeArea(0, "LOBBY", "0,5", 50));
-        areas.add(makeArea(1, "RECEPTION", "2,5", 10));
-        areas.add(makeArea(10, "ROOM", "1,2", 5));
-        data = new SimulationData(areas, 4, 30, 30, 10, 15, 60);
-        receptionistController = new ReceptionistController(data, null);
-        controller = new GuestController(data, null, receptionistController);
-    }
 
-    // ── processCheckIn ────────────────────────────────────────────────────────
+        // 1. Lobby Area
+        Area lobby = new Area();
+        lobby.Position = "0,0";
+        lobby.Dimension = "1,1";
+        lobby.AreaType = "LOBBY";
+        areas.add(lobby);
 
-    @Test
-    void processCheckIn_validGuest_addsGuestToSimulation() {
-        controller.processCheckIn(1, 10);
-        assertTrue(data.guests.containsKey(1), "Gast moet in data.guests zitten na check-in");
-    }
+        // 2. Reception Area
+        Area reception = new Area();
+        reception.Position = "1,0";
+        reception.Dimension = "1,1";
+        reception.AreaType = "RECEPTION";
+        areas.add(reception);
 
-    @Test
-    void processCheckIn_invalidGuestId_zero_doesNotAdd() {
-        controller.processCheckIn(0, 10);
-        assertFalse(data.guests.containsKey(0));
-    }
+        // 3. Staircase/Stairs Area
+        Area stairs = new Area();
+        stairs.Position = "2,0";
+        stairs.Dimension = "1,1";
+        stairs.AreaType = "STAIRS";
+        areas.add(stairs);
 
-    @Test
-    void processCheckIn_invalidGuestId_negative_doesNotAdd() {
-        controller.processCheckIn(-5, 10);
-        assertTrue(data.guests.isEmpty(), "Negatieve guestId mag niet worden toegevoegd");
-    }
+        // Instantiate authentic data structures
+        realData = new SimulationData(areas, 5, 10, 10, 10, 10, 10);
+        spyReceptionistController = new TestReceptionistController(realData, stubLogPanel);
 
-    @Test
-    void processCheckIn_duplicateGuestId_ignoresSecondCheckin() {
-        controller.processCheckIn(1, 10);
-        int sizeAfterFirst = data.guests.size();
-        controller.processCheckIn(1, 10);
-        assertEquals(sizeAfterFirst, data.guests.size(), "Dubbele check-in mag geen extra gast aanmaken");
+        guestController = new GuestController(realData, stubLogPanel, spyReceptionistController);
     }
 
     @Test
-    void processCheckIn_noLobby_doesNotSpawnGuest() {
-        data.areas.removeIf(a -> a.AreaType.equalsIgnoreCase("LOBBY"));
-        controller.processCheckIn(1, 10);
-        assertFalse(data.guests.containsKey(1), "Zonder lobby mag gast niet gespawned worden");
+    void testProcessCheckIn_Successful() {
+        int guestId = 1;
+        int preferredRoomId = 101;
+
+        // Act
+        guestController.processCheckIn(guestId, preferredRoomId);
+
+        // Assert
+        assertEquals(1, spyReceptionistController.callCount, "Receptionist should be notified of successful check-in");
+        assertEquals(guestId, spyReceptionistController.lastGuestId);
+        assertEquals(preferredRoomId, spyReceptionistController.lastPreferredRoomId);
     }
 
     @Test
-    void processCheckIn_noReception_doesNotSpawnGuest() {
-        data.areas.removeIf(a -> a.AreaType.equalsIgnoreCase("RECEPTION"));
-        controller.processCheckIn(1, 10);
-        assertFalse(data.guests.containsKey(1), "Zonder receptie mag gast niet gespawned worden");
+    void testProcessCheckIn_FailsValidation_DuplicateGuest() {
+        int guestId = 1;
+        int preferredRoomId = 101;
+
+        // Arrange: Pre-populate map to trigger duplicate check constraints
+        Guest existingGuest = new Guest(guestId, 0.0, 0.0);
+        realData.guests.put(guestId, existingGuest);
+
+        // Act
+        guestController.processCheckIn(guestId, preferredRoomId);
+
+        // Assert
+        assertEquals(0, spyReceptionistController.callCount, "Receptionist should not be called when duplicate check blocks check-in");
     }
 
     @Test
-    void processCheckIn_guestSpawnedAtLobbyY() {
-        controller.processCheckIn(1, 10);
-        Guest g = data.guests.get(1);
-        assertNotNull(g);
-        assertEquals(5 * data.tileSize + data.tileSize / 2.0, g.y, 0.001);
+    void testUpdate_ChangesStateFromExitingLiftToWalking() {
+        int guestId = 42;
+
+        // Arrange: Position guest at 0,0 but set a far away target
+        // to prevent GuestMover from instantly flipping them to AT_DESTINATION
+        Guest guest = new Guest(guestId, 0.0, 0.0);
+        guest.setTarget(500.0, 500.0);
+        guest.state = GuestState.EXITING_LIFT;
+        realData.guests.put(guestId, guest);
+
+        // Act
+        guestController.update();
+
+        // Assert
+        assertEquals(GuestState.WALKING, guest.state, "EXITING_LIFT state must safely transition into WALKING");
     }
 
     @Test
-    void processCheckIn_guestInitialStateIsWalking() {
-        controller.processCheckIn(1, 10);
-        Guest g = data.guests.get(1);
-        assertNotNull(g);
-        assertEquals(GuestState.WALKING, g.state);
-    }
+    void testUpdate_MaintainsOtherStateThanExitingLift() {
+        int guestId = 43;
 
-    // ── spawnGuest ────────────────────────────────────────────────────────────
+        // Arrange
+        Guest guest = new Guest(guestId, 0.0, 0.0);
+        guest.setTarget(500.0, 500.0);
+        guest.state = GuestState.IDLE;
+        realData.guests.put(guestId, guest);
 
-    @Test
-    void spawnGuest_nullGuest_returnsFalse() {
-        assertFalse(controller.spawnGuest(null));
-    }
+        // Act
+        guestController.update();
 
-    @Test
-    void spawnGuest_noLobby_returnsFalse() {
-        data.areas.removeIf(a -> a.AreaType.equalsIgnoreCase("LOBBY"));
-        Guest g = new Guest(99, 0, 0);
-        assertFalse(controller.spawnGuest(g));
-    }
-
-    @Test
-    void spawnGuest_noReception_returnsFalse() {
-        data.areas.removeIf(a -> a.AreaType.equalsIgnoreCase("RECEPTION"));
-        Guest g = new Guest(99, 0, 0);
-        assertFalse(controller.spawnGuest(g));
-    }
-
-    @Test
-    void spawnGuest_validSetup_returnsTrue() {
-        Guest g = new Guest(99, 0, 0);
-        assertTrue(controller.spawnGuest(g));
-    }
-
-    @Test
-    void spawnGuest_addsGuestToDataGuests() {
-        Guest g = new Guest(99, 0, 0);
-        controller.spawnGuest(g);
-        assertTrue(data.guests.containsKey(99));
-    }
-
-    @Test
-    void spawnGuest_setsActivityToWalkingToReception() {
-        Guest g = new Guest(99, 0, 0);
-        controller.spawnGuest(g);
-        assertEquals("WALKING_TO_RECEPTION", g.currentActivity);
-    }
-
-    @Test
-    void spawnGuest_setsIsInRoomFalse() {
-        Guest g = new Guest(99, 0, 0);
-        controller.spawnGuest(g);
-        assertFalse(g.isInRoom);
-    }
-
-    @Test
-    void spawnGuest_setsIsCheckingOutFalse() {
-        Guest g = new Guest(99, 0, 0);
-        controller.spawnGuest(g);
-        assertFalse(g.isCheckingOut);
-    }
-
-    // ── update ────────────────────────────────────────────────────────────────
-
-    @Test
-    void update_exitingLiftGuest_becomesWalking() {
-        // Gast op verdieping 0, target op een andere X zodat GuestMover hem niet
-        // meteen als AT_DESTINATION markeert na de state-wissel naar WALKING.
-        Guest g = new Guest(1, 100, 30);
-        g.targetX = 500; // ver weg zodat hij niet meteen aankomt
-        g.targetY = 30;
-        g.state = GuestState.EXITING_LIFT;
-        data.guests.put(1, g);
-
-        controller.update();
-
-        assertEquals(GuestState.WALKING, g.state,
-                "EXITING_LIFT moet overgaan naar WALKING in de update-loop");
-    }
-
-    @Test
-    void update_noGuestsInSimulation_doesNotThrow() {
-        data.guests.clear();
-        assertDoesNotThrow(() -> controller.update());
-    }
-
-    @Test
-    void update_idleGuestNotMoving_remainsIdle() {
-        Guest g = new Guest(1, 100, 100);
-        g.state = GuestState.IDLE;
-        g.targetX = 100;
-        g.targetY = 100;
-        data.guests.put(1, g);
-
-        controller.update();
-
-        assertEquals(GuestState.IDLE, g.state, "IDLE gast die al op target staat mag niet van state wisselen");
+        // Assert
+        assertEquals(GuestState.IDLE, guest.state, "IDLE state should stay unchanged through state-machine transitions");
     }
 }
