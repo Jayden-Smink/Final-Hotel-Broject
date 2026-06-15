@@ -14,6 +14,7 @@ import model.*;
 import view.SimulationRenderer;
 import factory.PersonFactory;
 import model.PersonType;
+import util.SoundManager; // 1. GEFIXT: Import toegevoegd voor de SoundManager
 
 public class SimulationPanel extends JPanel {
 
@@ -127,6 +128,10 @@ public class SimulationPanel extends JPanel {
         });
 
         gameLoop.start();
+
+        // 2. GEFIXT: SoundManager hier veilig geïnitialiseerd binnen de constructor
+        SoundManager soundManager = new SoundManager();
+        soundManager.playBackgroundMusic("/music/music.wav");
     }
 
     private boolean isLobbyClicked(int mouseX, int mouseY) {

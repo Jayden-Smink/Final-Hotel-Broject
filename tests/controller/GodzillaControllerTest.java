@@ -17,7 +17,7 @@ class GodzillaControllerTest {
     private FakeDestructionStrategy fakeStrategy;
     private FakeLogPanel fakeLog;
 
-    // --- HANDMATIGE FAKES ---
+    // -- HANDMATIGE FAKES --
 
     static class FakeDestructionStrategy implements IDestructionStrategy {
         public List<Area> updatedAreas = new ArrayList<>();

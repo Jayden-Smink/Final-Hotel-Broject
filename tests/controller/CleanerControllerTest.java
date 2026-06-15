@@ -197,6 +197,7 @@ class CleanerControllerTest {
         c1.targetX = 100; c1.targetY = 25;
         c1.x = 100;       c1.y = 25;
 
+
         controller.update();
 
         assertEquals(CleanerState.IDLE, c1.state,
