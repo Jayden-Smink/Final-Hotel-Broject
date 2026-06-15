@@ -24,6 +24,7 @@ public class SimulationPanel extends JPanel {
     private final HotelTimeEngine hte;
 
     private TimeControlPanel timeControlPanel;
+    private GameLoop gameLoop;
 
     public SimulationPanel(
             List<Area> areas,
@@ -51,6 +52,7 @@ public class SimulationPanel extends JPanel {
 
         this.controller = new SimulationController(data, logPanel, selectedScenario);
         this.renderer = new SimulationRenderer(data, controller.getCleanerController());
+        this.renderer.setGodzillaController(controller.getGodzillaController(), data.tileSize, data.horizontalOffset);
 
         // Zoek de lobby en spawn schoonmakers
         Area lobbyArea = null;
@@ -114,9 +116,14 @@ public class SimulationPanel extends JPanel {
 
         add(splitPane, BorderLayout.CENTER);
 
-        GameLoop gameLoop = new GameLoop(controller, hte, () -> {
+        gameLoop = new GameLoop(controller, hte, () -> {
             if (timeControlPanel != null) timeControlPanel.refresh();
             repaint();
+            // Auto-stop the simulation once Godzilla has finished
+            if (controller.isGodzillaDone()) {
+                gameLoop.stop();
+                if (logPanel != null) logPanel.addLog("💀 Simulatie gestopt na Godzilla aanval.");
+            }
         });
 
         gameLoop.start();
@@ -152,6 +159,23 @@ public class SimulationPanel extends JPanel {
 
     public JPanel createBottomPanel() {
         timeControlPanel = new TimeControlPanel(hte, data);
-        return timeControlPanel;
+
+        JButton godzillaButton = new JButton("🦖 Test Godzilla");
+        godzillaButton.setToolTipText("Start de Godzilla aanval en stop de simulatie daarna");
+        godzillaButton.setBackground(new Color(180, 40, 40));
+        godzillaButton.setForeground(Color.WHITE);
+        godzillaButton.setFocusPainted(false);
+        godzillaButton.setFont(new Font("SansSerif", Font.BOLD, 13));
+        godzillaButton.addActionListener(e -> {
+            controller.triggerGodzilla();
+            godzillaButton.setEnabled(false);
+            godzillaButton.setText("🦖 Godzilla is onderweg...");
+            if (logPanel != null) logPanel.addLog("🦖 Godzilla test gestart!");
+        });
+
+        JPanel bottomPanel = new JPanel(new BorderLayout());
+        bottomPanel.add(timeControlPanel, BorderLayout.CENTER);
+        bottomPanel.add(godzillaButton, BorderLayout.EAST);
+        return bottomPanel;
     }
 }

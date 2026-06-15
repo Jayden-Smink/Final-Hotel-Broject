@@ -26,6 +26,7 @@ public class SimulationController implements HotelEventListener {
     private final GuestController guestController;               // Bepaalt de bewegingen en acties van de gasten.
     private final GuestActivityController guestActivityController; // Regelt groepsactiviteiten zoals de bioscoop of fitness.
     private final CleanerController cleanerController;           // Stuurt de pool van schoonmakers aan.
+    private final GodzillaController godzillaController;         // Beheert de Godzilla aanval.
 
     // DE COMMUNICATIEMIDDELEN:
     private final LogPanel logPanel;             // Het tekstvak op het scherm waar we meldingen printen.
@@ -44,6 +45,7 @@ public class SimulationController implements HotelEventListener {
         this.guestController = new GuestController(data, logPanel, this.receptionistController);
         this.guestActivityController = new GuestActivityController(data, receptionistController, logPanel);
         this.cleanerController = new CleanerController(data, logPanel);
+        this.godzillaController = new GodzillaController(data, logPanel, new model.FireDestruction(3));
 
         // Koppel deze controller aan de EventManager zodat we bericht krijgen als er iets gebeurt.
         this.eventManager = new HotelEventManager();
@@ -131,7 +133,7 @@ public class SimulationController implements HotelEventListener {
                 for (int i = 0; i <= 10; i++){
                     System.out.println("🦖 GODZILLA ATTACK!");
                 }
-                if (logPanel != null) logPanel.addLog("🦖 GODZILLA ATTACK!");
+                godzillaController.activate();
                 break;
 
             case START_CINEMA:
@@ -155,6 +157,17 @@ public class SimulationController implements HotelEventListener {
         elevatorController.update();        // Laat de lift een stukje stijgen/dalen
         guestActivityController.updateActivities(); // Update hoelang activiteiten nog duren
         cleanerController.update();         // Laat de schoonmakers hun werk doen
+        godzillaController.update();        // Laat Godzilla het hotel verwoesten
+    }
+
+    /** Activeer Godzilla direct (voor de test-knop). */
+    public void triggerGodzilla() {
+        godzillaController.activate();
+    }
+
+    /** Geeft true terug als Godzilla klaar is met het hotel verwoesten. */
+    public boolean isGodzillaDone() {
+        return godzillaController.isFinished();
     }
 
     /**
@@ -164,5 +177,9 @@ public class SimulationController implements HotelEventListener {
      */
     public CleanerController getCleanerController() {
         return this.cleanerController;
+    }
+
+    public GodzillaController getGodzillaController() {
+        return this.godzillaController;
     }
 }

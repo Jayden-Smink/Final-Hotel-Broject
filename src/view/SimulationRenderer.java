@@ -12,6 +12,8 @@ public class SimulationRenderer {
     private final AreaRenderer areaRenderer;
     private final ElevatorRenderer elevatorRenderer;
     private final CleanerRenderer cleanerRenderer;
+    private GodzillaRenderer godzillaRenderer;
+    private controller.GodzillaController godzillaController;
 
     public SimulationRenderer(SimulationData data, CleanerController cleanerController) {
         this.data = data;
@@ -19,6 +21,11 @@ public class SimulationRenderer {
         this.areaRenderer = new AreaRenderer(assetLoader, cleanerController);
         this.elevatorRenderer = new ElevatorRenderer(assetLoader);
         this.cleanerRenderer = new CleanerRenderer(cleanerController);
+    }
+
+    public void setGodzillaController(controller.GodzillaController gc, int tileSize, int horizontalOffset) {
+        this.godzillaController = gc;
+        this.godzillaRenderer = new GodzillaRenderer(tileSize, horizontalOffset);
     }
 
     public void render(Graphics2D g2, SimulationData data) {
@@ -32,6 +39,11 @@ public class SimulationRenderer {
         areaRenderer.drawAreas(g2, data, true);
         drawGuests(g2, data);
         cleanerRenderer.drawCleaners(g2, data.horizontalOffset);
+
+        // Draw Godzilla on top of everything else
+        if (godzillaRenderer != null && godzillaController != null) {
+            godzillaRenderer.render(g2, data, godzillaController.getGodzilla());
+        }
     }
 
     private void drawGuests(Graphics2D g2, SimulationData data) {

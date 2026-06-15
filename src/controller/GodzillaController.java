@@ -26,9 +26,19 @@ public class GodzillaController {
         this.godzilla = new GodzillaModel(0, 0, 1.5);
     }
 
+    private boolean hasStarted = false;
+    private boolean finished = false;
+
     public void activate() {
         godzilla.isActive = true;
+        hasStarted = true;
+        finished = false;
         if (logPanel != null) logPanel.addLog("🦖 GODZILLA ATTACK! Run!");
+    }
+
+    /** True only after Godzilla has fully walked through the hotel. */
+    public boolean isFinished() {
+        return finished;
     }
 
     public void update() {
@@ -55,6 +65,7 @@ public class GodzillaController {
         // Check if done
         if (godzilla.isDone(maxColumn)) {
             godzilla.isActive = false;
+            finished = true;
             if (logPanel != null) logPanel.addLog("🦖 Godzilla heeft het hotel verwoest!");
         }
     }
