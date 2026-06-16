@@ -124,6 +124,7 @@ public class SimulationController implements HotelEventListener {
             // EVACUATIE: Alle gasten verlaten het hotel.
             case EVACUATE:
                 guestActivityController.evacuateAllGuests();
+                cleanerController.evacuateAllCleaners();
                 if (logPanel != null) logPanel.addLog("🚨 EVACUATIE! Alle gasten verlaten het hotel.");
                 break;
 
@@ -175,6 +176,7 @@ public class SimulationController implements HotelEventListener {
 
     public void triggerEvacuate() {
         guestActivityController.evacuateAllGuests();
+        cleanerController.evacuateAllCleaners();
     }
 
     /**

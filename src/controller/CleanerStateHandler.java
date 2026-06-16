@@ -29,7 +29,7 @@ public class CleanerStateHandler {
             handleArrival(worker);
         }
 
-        if (worker.state == CleanerState.IDLE && !worker.dirtyRooms.isEmpty()) {
+        if (worker.state == CleanerState.IDLE && !worker.dirtyRooms.isEmpty() && !worker.isEvacuating) {
             int nextRoomId = worker.dirtyRooms.remove(0);
             assigner.assignToRoom(worker, nextRoomId);
         }

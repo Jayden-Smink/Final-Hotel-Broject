@@ -1,8 +1,6 @@
 package controller;
 
-import model.Cleaner;
-import model.StairModel;
-import model.SimulationData;
+import model.*;
 import view.LogPanel;
 import java.util.ArrayList;
 import java.util.List;
@@ -36,5 +34,22 @@ public class CleanerController {
 
     public List<Cleaner> getActiveCleaners() {
         return new ArrayList<>(data.cleaners.values());
+    }
+
+    public void evacuateAllCleaners() {
+        for (Cleaner cleaner : data.cleaners.values()) {
+            if (cleaner.isDead) continue;
+            cleaner.isEvacuating = true;
+            cleaner.dirtyRooms.clear();          // gooi wachtrij weg
+            cleaner.state = CleanerState.WALKING_BACK;
+            for (int i = 0; i < data.areas.size(); i++) {
+                Area area = data.areas.get(i);
+                if (area.AreaType.equalsIgnoreCase("LOBBY")) {
+                    double exitY = (area.getPos()[1] * data.tileSize) + data.tileSize / 2.0;
+                    cleaner.setTarget(20.0, exitY);
+                    break;
+                }
+            }
+        }
     }
 }
