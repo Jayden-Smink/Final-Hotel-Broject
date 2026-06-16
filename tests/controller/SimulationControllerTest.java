@@ -27,15 +27,16 @@ class SimulationControllerTest {
 
     private SimulationData data;
     private SimulationController controller;
+    private HotelTimeEngine hte;
 
     @BeforeEach
     void setUp() {
         List<Area> areas = Arrays.asList(makeLobby(), makeRoom(1), makeRoom(2));
         data = new SimulationData(areas, 4, 1, 60, 60, 60, 60);
         data.cleaners.put(1, new Cleaner(1, 60, 25));
-
+        hte = new HotelTimeEngine();
         // Scenario 0 → no automatic events during unit tests
-        controller = new SimulationController(data, null, 0);
+        controller = new SimulationController(data, null, 0, hte);
     }
 
     // ── construction ──────────────────────────────────────────────────────────
@@ -46,7 +47,7 @@ class SimulationControllerTest {
         SimulationData d = new SimulationData(areas, 4, 1, 60, 60, 60, 60);
         d.cleaners.put(1, new Cleaner(1, 60, 25));
 
-        assertDoesNotThrow(() -> new SimulationController(d, null, 0));
+        assertDoesNotThrow(() -> new SimulationController(d, null, 0, hte));
     }
 
     @Test
@@ -56,7 +57,7 @@ class SimulationControllerTest {
         d.cleaners.put(1, new Cleaner(1, 60, 25));
         view.LogPanel log = new view.LogPanel();
 
-        assertDoesNotThrow(() -> new SimulationController(d, log, 0));
+        assertDoesNotThrow(() -> new SimulationController(d, log, 0, hte));
     }
 
     // ── getCleanerController ──────────────────────────────────────────────────

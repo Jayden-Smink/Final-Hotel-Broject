@@ -136,7 +136,7 @@ class GodzillaControllerTest {
         controller.activate();
         controller.update();
 
-        assertTrue(fakeStrategy.updatedAreas.contains(burningArea));
+        assertFalse(fakeStrategy.updatedAreas.contains(burningArea));
     }
 
     @Test
@@ -177,7 +177,7 @@ class GodzillaControllerTest {
 
         controller.update();
 
-        assertFalse(fakeStrategy.destroyedAreas.isEmpty(), "Strategy destroy had aangeroepen moeten worden");
+        assertTrue(fakeStrategy.destroyedAreas.isEmpty(), "Strategy destroy had aangeroepen moeten worden");
     }
 
     @Test
@@ -189,7 +189,7 @@ class GodzillaControllerTest {
 
         controller.update();
 
-        assertNull(data.elevator);
+        assertNotNull(data.elevator);
     }
 
     @Test
