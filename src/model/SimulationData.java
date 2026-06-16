@@ -9,6 +9,7 @@ public class SimulationData {
     public Map<Integer, Guest> guests = new ConcurrentHashMap<>();
     public int tileSize = 60;
     public int horizontalOffset = 60;
+    public int hteTicks = 0; // telt het aantal HTE ticks seit de start
 
     public int numberOfCleaners = 2;
     public Map<Integer, Cleaner> cleaners = new ConcurrentHashMap<>();
@@ -17,18 +18,16 @@ public class SimulationData {
     public GuestSettings guestSettings;
     public FacilitySettings facilitySettings;
 
-    public SimulationData(List<Area> areas, int capacity, int cleaningSeconds, int cinemaDurationSeconds, int restaurantDurationSeconds, int fitnessDurationSeconds, int elevatorWaitSeconds) {
+    public SimulationData(List<Area> areas, int capacity, int cleaningSeconds, int cinemaDurationSeconds,
+                          int restaurantDurationSeconds, int fitnessDurationSeconds, int elevatorWaitSeconds) {
         this.areas = areas;
         this.cleanerSettings = new CleanerSettings(cleaningSeconds);
         this.guestSettings = new GuestSettings(elevatorWaitSeconds);
 
-        // Zoek de onderste verdieping via een gewone for loop
         int bottomFloor = 0;
         for (int i = 0; i < areas.size(); i++) {
             int floorY = areas.get(i).getPos()[1];
-            if (floorY > bottomFloor) {
-                bottomFloor = floorY;
-            }
+            if (floorY > bottomFloor) bottomFloor = floorY;
         }
 
         this.elevator = new Elevator(5.0, bottomFloor * tileSize, tileSize);

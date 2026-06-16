@@ -12,17 +12,11 @@ public class TimeControlPanel extends JPanel {
     private final SimulationData data;
     private final JLabel statusLabel;
     private final JButton pauseBtn;
-
-    private final StopwatchTimer stopwatchTimer;
-    private final StopwatchDisplay stopwatchDisplay;
     private final JLabel timerLabel;
 
     public TimeControlPanel(HotelTimeEngine hte, SimulationData data) {
         this.hte = hte;
         this.data = data;
-
-        this.stopwatchTimer = new StopwatchTimer();
-        this.stopwatchDisplay = new StopwatchDisplay();
 
         setLayout(new FlowLayout(FlowLayout.LEFT));
 
@@ -32,40 +26,20 @@ public class TimeControlPanel extends JPanel {
         pauseBtn.addActionListener(e -> {
             hte.togglePause();
             pauseBtn.setText(hte.isPaused() ? "▶ Resume" : "⏸ Pause");
-            if (hte.isPaused()) {
-                stopwatchTimer.pause();
-            } else {
-                stopwatchTimer.start();
-            }
         });
 
-        JButton slowerBtn = new JButton("🐢 Slower");
-        JButton fasterBtn = new JButton("⚡ Faster");
-
-        slowerBtn.addActionListener(e -> {
-            hte.setSpeed(hte.getSpeed() - 1);
-            stopwatchTimer.setSpeed(hte.getSpeed());
-        });
-
-        fasterBtn.addActionListener(e -> {
-            hte.setSpeed(hte.getSpeed() + 1);
-            stopwatchTimer.setSpeed(hte.getSpeed());
-        });
-
+        JButton slowerBtn  = new JButton("🐢 Slower");
+        JButton fasterBtn  = new JButton("⚡ Faster");
         JButton minus50Btn = new JButton("⏪ -50");
         JButton plus50Btn  = new JButton("⏩ +50");
 
-        minus50Btn.addActionListener(e -> {
-            hte.setSpeed(hte.getSpeed() - 50);
-            stopwatchTimer.setSpeed(hte.getSpeed());
-        });
+        // Lager interval = sneller events, hoger interval = trager events
+        slowerBtn.addActionListener(e  -> hte.setHteInterval(hte.getHteInterval() + 10));
+        fasterBtn.addActionListener(e  -> hte.setHteInterval(hte.getHteInterval() - 10));
+        minus50Btn.addActionListener(e -> hte.setHteInterval(hte.getHteInterval() + 50));
+        plus50Btn.addActionListener(e  -> hte.setHteInterval(hte.getHteInterval() - 50));
 
-        plus50Btn.addActionListener(e -> {
-            hte.setSpeed(hte.getSpeed() + 50);
-            stopwatchTimer.setSpeed(hte.getSpeed());
-        });
-
-        timerLabel = new JLabel(stopwatchDisplay.zero());
+        timerLabel = new JLabel("⏱ HTE: 0");
         timerLabel.setFont(new Font("Monospaced", Font.BOLD, 14));
         timerLabel.setForeground(new Color(0, 180, 100));
 
@@ -76,8 +50,6 @@ public class TimeControlPanel extends JPanel {
         add(minus50Btn);
         add(plus50Btn);
         add(timerLabel);
-
-        stopwatchTimer.start();
     }
 
     public void refresh() {
@@ -85,7 +57,7 @@ public class TimeControlPanel extends JPanel {
                 .filter(g -> !g.isCheckingOut)
                 .count();
         String pause = hte.isPaused() ? " | ⏸ GEPAUZEERD" : "";
-        statusLabel.setText("Gasten: " + active + " | Snelheid: " + hte.getSpeed() + "x" + pause);
-        timerLabel.setText("⏱ " + stopwatchDisplay.format(stopwatchTimer.getElapsedMillis()));
+        statusLabel.setText("Gasten: " + active + " | HTE: " + hte.getHteInterval() + "ms" + pause);
+        timerLabel.setText("⏱ HTE: " + data.hteTicks);
     }
 }

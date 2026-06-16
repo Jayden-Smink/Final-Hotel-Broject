@@ -50,9 +50,12 @@ public class SimulationPanel extends JPanel {
         this.data.numberOfCleaners = cleanerCount;
         this.logPanel = new LogPanel();
 
-        this.controller = new SimulationController(data, logPanel, selectedScenario);
+        // hte eerst aanmaken zodat de controller het kan ontvangen
+        this.hte = new HotelTimeEngine();
+        this.controller = new SimulationController(data, logPanel, selectedScenario, hte);
+
         this.renderer = new SimulationRenderer(data, controller.getCleanerController());
-        // Hotel grid height = highest Y tile position (lobby sits at flippedMax, which is the tallest Y)
+
         int hotelGridHeight = data.areas.stream()
                 .mapToInt(a -> a.getPos()[1] + a.getDim()[1])
                 .max().orElse(10);
@@ -80,8 +83,6 @@ public class SimulationPanel extends JPanel {
             }
         }
 
-        this.hte = new HotelTimeEngine();
-
         setLayout(new BorderLayout());
 
         JPanel simulationView = new JPanel(new BorderLayout()) {
@@ -90,7 +91,6 @@ public class SimulationPanel extends JPanel {
                 super.paintComponent(g);
                 renderer.render((Graphics2D) g, data);
 
-                // Draw the "HOTEL DESTROYED" overlay once Godzilla is done
                 if (controller.isGodzillaDone()) {
                     drawHotelDestroyedOverlay((Graphics2D) g, getWidth(), getHeight());
                 }
@@ -128,10 +128,9 @@ public class SimulationPanel extends JPanel {
         gameLoop = new GameLoop(controller, hte, () -> {
             if (timeControlPanel != null) timeControlPanel.refresh();
             repaint();
-            // Stop everything once Godzilla has finished — do one final repaint first
             if (controller.isGodzillaDone()) {
                 gameLoop.stop();
-                SwingUtilities.invokeLater(() -> repaint()); // ensure overlay renders
+                SwingUtilities.invokeLater(() -> repaint());
             }
         });
 
@@ -139,13 +138,11 @@ public class SimulationPanel extends JPanel {
     }
 
     private void drawHotelDestroyedOverlay(Graphics2D g2, int panelWidth, int panelHeight) {
-        // Dark semi-transparent full screen cover
         g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.65f));
         g2.setColor(new Color(10, 0, 0));
         g2.fillRect(0, 0, panelWidth, panelHeight);
         g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f));
 
-        // Box
         int boxW = 520, boxH = 180;
         int boxX = (panelWidth - boxW) / 2;
         int boxY = (panelHeight - boxH) / 2;
@@ -156,14 +153,12 @@ public class SimulationPanel extends JPanel {
         g2.setStroke(new BasicStroke(3));
         g2.drawRoundRect(boxX, boxY, boxW, boxH, 24, 24);
 
-        // Title line
         g2.setFont(new Font("SansSerif", Font.BOLD, 32));
         g2.setColor(new Color(255, 60, 60));
         String line1 = "🦖  HOTEL DESTROYED";
         FontMetrics fm1 = g2.getFontMetrics();
         g2.drawString(line1, boxX + (boxW - fm1.stringWidth(line1)) / 2, boxY + 70);
 
-        // Subtitle line
         g2.setFont(new Font("SansSerif", Font.PLAIN, 18));
         g2.setColor(new Color(220, 180, 180));
         String line2 = "ONLY GODZILLA REMAINS";

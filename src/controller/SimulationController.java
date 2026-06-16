@@ -8,36 +8,38 @@ import view.LogPanel;
 
 /**
  * DE HOOFD-CONTROLLER (Verkeersregelaar):
- * Deze klasse is het hart van de logica. Het luistert naar gebeurtenissen (events)
- * die in het hotel plaatsvinden en delegeert de taken naar de juiste gespecialiseerde controllers
- * (bijv. de GuestController of de CleanerController).
+ * Het hart van de logica. Luistert naar hotel-events en delegeert taken
+ * naar de juiste gespecialiseerde sub-controllers.
+ * Ondersteunt ook de HotelTimeEngine voor pauze en snelheidsregeling.
  */
 public class SimulationController implements HotelEventListener {
 
-    // HET GEHEUGEN: Bevat de gedeelde data (kamers, gasten, lift) waar alle controllers mee werken.
+    // HET GEHEUGEN: Gedeelde data (kamers, gasten, lift) voor alle controllers.
     private final SimulationData data;
+    private final HotelTimeEngine hte;
+    private int lastHteInterval = -1;
     int timer = 0;
 
-
     // DE ONDERAANNEMERS (Sub-controllers):
-    // Elk van deze controllers is verantwoordelijk voor een specifiek deel van de logica in het hotel.
-    private final ElevatorController elevatorController;         // Bepaalt waar de lift heen gaat.
-    private final ReceptionistController receptionistController; // Regelt het toewijzen van kamers en sleutels.
-    private final GuestController guestController;               // Bepaalt de bewegingen en acties van de gasten.
-    private final GuestActivityController guestActivityController; // Regelt groepsactiviteiten zoals de bioscoop of fitness.
-    private final CleanerController cleanerController;           // Stuurt de pool van schoonmakers aan.
-    private final GodzillaController godzillaController;         // Beheert de Godzilla aanval.
+    private final ElevatorController elevatorController;          // Bepaalt waar de lift heen gaat.
+    private final ReceptionistController receptionistController;  // Regelt kamer- en sleuteltoewijzing.
+    private final GuestController guestController;                // Bepaalt bewegingen en acties van gasten.
+    private final GuestActivityController guestActivityController;// Regelt groepsactiviteiten (bioscoop, fitness).
+    private final CleanerController cleanerController;            // Stuurt de pool van schoonmakers aan.
+    private final GodzillaController godzillaController;          // Beheert de Godzilla-aanval.
 
     // DE COMMUNICATIEMIDDELEN:
-    private final LogPanel logPanel;             // Het tekstvak op het scherm waar we meldingen printen.
-    private final HotelEventManager eventManager;// De motor die hotel-gebeurtenissen (zoals check-in, brand) genereert.
+    private final LogPanel logPanel;              // Tekstvak op het scherm voor meldingen.
+    private final HotelEventManager eventManager; // Motor die hotel-events genereert.
 
-    // DE OPSTART-FASERING (Constructor):
-    // Wordt aangeroepen als de simulatie begint. Maakt alle sub-controllers aan en verbindt ze met elkaar.
-    public SimulationController(SimulationData data, LogPanel logPanel, int selectedScenario) {
+    /**
+     * DE OPSTART-FASERING (Constructor):
+     * Maakt alle sub-controllers aan, verbindt ze, en start het gekozen scenario.
+     */
+    public SimulationController(SimulationData data, LogPanel logPanel, int selectedScenario, HotelTimeEngine hte) {
         this.data = data;
         this.logPanel = logPanel;
-
+        this.hte = hte;
 
         // Iedere sub-controller krijgt toegang tot de data en het logpaneel.
         this.elevatorController = new ElevatorController(data, logPanel);
@@ -47,59 +49,57 @@ public class SimulationController implements HotelEventListener {
         this.cleanerController = new CleanerController(data, logPanel);
         this.godzillaController = new GodzillaController(data, logPanel, new model.FireDestruction(3));
 
-        // Koppel deze controller aan de EventManager zodat we bericht krijgen als er iets gebeurt.
+        // Koppel deze controller aan de EventManager en stel het HTE-interval in.
         this.eventManager = new HotelEventManager();
         this.eventManager.register(this);
-//        eventManager.setHte(100);
+        eventManager.setHte(hte.getHteInterval());
+        lastHteInterval = hte.getHteInterval();
 
-        // Start het simulatiescenario (de vooraf bepaalde lijst met events, bijv. "gast komt aan na 2 seconden").
+        // Start het simulatiescenario.
         System.out.println("Gestart scenario: " + selectedScenario);
         this.eventManager.start(selectedScenario);
     }
 
     /**
      * HET MELDINGENCENTRUM (Event Listener):
-     * Deze methode wordt automatisch aangeroepen door de HotelEventManager wanneer er iets in het hotel moet gebeuren.
-     * Het is een soort wisselbord dat het inkomende event doorstuurt naar het juiste onderdeel.
+     * Wordt automatisch aangeroepen door de HotelEventManager.
+     * Stuurt het inkomende event door naar het juiste onderdeel.
      */
     @Override
     public void notify(HotelEvent event) {
-        // Once Godzilla has destroyed the hotel, ignore all new events
-        if (godzillaController.isFinished()) return;
+        // Negeer events als de simulatie gepauzeerd is.
+        if (hte.isPaused()) return;
 
-//        timer+= 1;
-//        System.out.println(timer);
+        timer += 1;
+        data.hteTicks = timer;
 
         switch (event.getEventType()) {
 
-            // NIEUWE GAST: Geef het gast-ID en de bijbehorende data door aan de GuestController.
+            // NIEUWE GAST: Geef het gast-ID en data door aan de GuestController.
             case CHECK_IN:
                 guestController.processCheckIn(event.getGuestId(), event.getData());
                 break;
 
-            // VERTREKKENDE GAST: Zoek de gast op, verander zijn status, en stuur hem naar de Lobby om het gebouw te verlaten.
+            // VERTREKKENDE GAST: Verander status en stuur gast naar de Lobby-uitgang.
             case CHECK_OUT:
                 Guest leavingGuest = data.guests.get(event.getGuestId());
-
                 if (leavingGuest != null) {
                     leavingGuest.isCheckingOut = true;
 
-                    // Zoek de coördinaten van de LOBBY zodat we weten waar de uitgang is.
-                    // We gebruiken een for-loop in plaats van een stream voor betere prestaties.
+                    // Zoek de Lobby-coördinaten voor de uitgang.
                     for (int i = 0; i < data.areas.size(); i++) {
                         Area area = data.areas.get(i);
                         if (area.AreaType.equalsIgnoreCase("LOBBY")) {
                             double exitY = (area.getPos()[1] * data.tileSize) + data.tileSize / 2.0;
-                            leavingGuest.setTarget(20.0, exitY); // Stel het doel van de gast in op de uitgang
+                            leavingGuest.setTarget(20.0, exitY);
                             break;
                         }
                     }
-
                     if (logPanel != null) logPanel.addLog("🚪 Gast " + leavingGuest.id + " checkt uit.");
                 }
                 break;
 
-            // GAST WIL ETEN: (Logica voor het restaurant kan hier nog verder uitgebreid worden)
+            // GAST WIL ETEN: (Restaurantlogica kan hier uitgebreid worden)
             case NEED_FOOD:
                 if (logPanel != null) logPanel.addLog("🍔 Gast " + event.getGuestId() + " wil eten.");
                 break;
@@ -114,27 +114,23 @@ public class SimulationController implements HotelEventListener {
                 if (logPanel != null) logPanel.addLog("🎬 Gast " + event.getGuestId() + " gaat naar cinema.");
                 break;
 
-            // ER IS GEPOTST IN EEN KAMER / NOODGEVAL: Geef het kamer-ID door aan de CleanerController.
+            // SCHOONMAAK-NOODGEVAL: Geef kamer-ID door aan de CleanerController.
             case CLEANING_EMERGENCY:
-                int roomId = event.getData(); // Haal op om welke kamer het gaat
-                cleanerController.handleCleaningEmergency(roomId); // Zet de schoonmakers aan het werk
+                int roomId = event.getData();
+                cleanerController.handleCleaningEmergency(roomId);
                 if (logPanel != null) logPanel.addLog("🧹 Cleaning emergency in kamer " + roomId + "!");
                 break;
 
-            // SPECIALE EVENTS:
+            // EVACUATIE: Alle gasten verlaten het hotel.
             case EVACUATE:
-                for (int i = 0; i <= 10; i++){
-                    System.out.println("🚨 EVACUATIE!");
-                }
                 guestActivityController.evacuateAllGuests();
                 if (logPanel != null) logPanel.addLog("🚨 EVACUATIE! Alle gasten verlaten het hotel.");
                 break;
 
+            // GODZILLA AANVAL:
             case GODZILLA:
-                for (int i = 0; i <= 10; i++){
-                    System.out.println("🦖 GODZILLA ATTACK!");
-                }
                 godzillaController.activate();
+                if (logPanel != null) logPanel.addLog("🦖 GODZILLA ATTACK!");
                 break;
 
             case START_CINEMA:
@@ -149,16 +145,22 @@ public class SimulationController implements HotelEventListener {
 
     /**
      * DE HARTSLAG (Game Loop Tick):
-     * Deze methode wordt elke frame (of tick) van de simulatie aangeroepen door de main loop.
-     * Het deelt een 'tikje' uit aan alle actieve onderdelen, zodat zij één stapje kunnen bewegen
-     * of nadenken over hun volgende actie.
+     * Aangeroepen elke frame. Deelt een tikje uit aan alle actieve onderdelen
+     * en synchroniseert het HTE-interval als dat via het TimeControlPanel is gewijzigd.
      */
     public void updateTick() {
-        guestController.update();           // Laat gasten een stapje lopen
-        elevatorController.update();        // Laat de lift een stukje stijgen/dalen
-        guestActivityController.updateActivities(); // Update hoelang activiteiten nog duren
-        cleanerController.update();         // Laat de schoonmakers hun werk doen
-        godzillaController.update();        // Laat Godzilla het hotel verwoesten
+        // Pas eventManager aan als het interval gewijzigd is.
+        int currentInterval = hte.getHteInterval();
+        if (currentInterval != lastHteInterval) {
+            eventManager.setHte(currentInterval);
+            lastHteInterval = currentInterval;
+        }
+
+        guestController.update();                // Laat gasten een stapje lopen.
+        elevatorController.update();             // Laat de lift een stukje stijgen/dalen.
+        guestActivityController.updateActivities(); // Update hoe lang activiteiten nog duren.
+        cleanerController.update();              // Laat de schoonmakers hun werk doen.
+        godzillaController.update();             // Laat Godzilla het hotel verwoesten.
     }
 
     /** Activeer Godzilla direct (voor de test-knop). */
@@ -166,15 +168,15 @@ public class SimulationController implements HotelEventListener {
         godzillaController.activate();
     }
 
-    /** Geeft true terug als Godzilla klaar is met het hotel verwoesten. */
+    /** Geeft true als Godzilla klaar is met het hotel verwoesten. */
     public boolean isGodzillaDone() {
         return godzillaController.isFinished();
     }
 
     /**
-     * DOORGEEFLUIK (Getter):
-     * Zorgt ervoor dat andere klasses (zoals de Renderer uit het vorige script)
-     * bij de CleanerController kunnen om informatie op te vragen (bijv. om ze te tekenen).
+     * DOORGEEFLUIKEN (Getters):
+     * Zorgen dat andere klassen (bijv. de Renderer) bij de sub-controllers
+     * kunnen om informatie op te vragen.
      */
     public CleanerController getCleanerController() {
         return this.cleanerController;

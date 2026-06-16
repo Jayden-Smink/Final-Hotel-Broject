@@ -1,38 +1,17 @@
 package controller;
 
-/**
- * Beheert de tijdsinstellingen van de hotelsimulatie,
- * zoals het pauzeren/hervatten en het aanpassen van de afspeelsnelheid.
- */
 public class HotelTimeEngine {
 
     private boolean paused = false;
-    private int speed = 1; // Standaard snelheid (1 update per tick)
+    private int speed = 1;
+    private int hteInterval = 20; // milliseconden tussen events (lager = sneller)
 
-    /**
-     * Wisselt de huidige pauzestatus om (van pauze naar spelen, en andersom).
-     */
-    public void togglePause()
-    {
-        paused = !paused;
-    }
+    public void togglePause() { paused = !paused; }
+    public boolean isPaused() { return paused; }
 
-    public boolean isPaused()
-    {
-        return paused;
-    }
+    public void setSpeed(int s) { this.speed = Math.max(1, s); }
+    public int getSpeed() { return speed; }
 
-    /**
-     * Stelt de versnelling van de simulatie in (bijv. 2x of 4x versnelling).
-     * Math.max(1, s) zorgt ervoor dat de snelheid nooit lager dan 1 (of negatief) kan worden.
-     */
-    public void setSpeed(int s)
-    {
-        this.speed = Math.max(1, s);
-    }
-
-    public int getSpeed()
-    {
-        return speed;
-    }
+    public void setHteInterval(int ms) { this.hteInterval = Math.max(10, ms); }
+    public int getHteInterval() { return hteInterval; }
 }
