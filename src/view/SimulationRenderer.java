@@ -23,9 +23,9 @@ public class SimulationRenderer {
         this.cleanerRenderer = new CleanerRenderer(cleanerController);
     }
 
-    public void setGodzillaController(controller.GodzillaController gc, int tileSize, int horizontalOffset) {
+    public void setGodzillaController(controller.GodzillaController gc, int tileSize, int horizontalOffset, int hotelGridHeight) {
         this.godzillaController = gc;
-        this.godzillaRenderer = new GodzillaRenderer(tileSize, horizontalOffset);
+        this.godzillaRenderer = new GodzillaRenderer(tileSize, horizontalOffset, hotelGridHeight);
     }
 
     public void render(Graphics2D g2, SimulationData data) {
@@ -55,7 +55,7 @@ public class SimulationRenderer {
         }
 
         for (Guest guest : guestSnapshot) {
-            if (guest.state != GuestState.IN_LIFT) {
+            if (guest.isDead || guest.state != GuestState.IN_LIFT) {
                 GuestRenderer.draw(g2, guest, data.horizontalOffset);
             }
         }

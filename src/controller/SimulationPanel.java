@@ -14,7 +14,6 @@ import model.*;
 import view.SimulationRenderer;
 import factory.PersonFactory;
 import model.PersonType;
-import util.SoundManager; // 1. GEFIXT: Import toegevoegd voor de SoundManager
 
 public class SimulationPanel extends JPanel {
 
@@ -53,7 +52,11 @@ public class SimulationPanel extends JPanel {
 
         this.controller = new SimulationController(data, logPanel, selectedScenario);
         this.renderer = new SimulationRenderer(data, controller.getCleanerController());
-        this.renderer.setGodzillaController(controller.getGodzillaController(), data.tileSize, data.horizontalOffset);
+        // Hotel grid height = highest Y tile position (lobby sits at flippedMax, which is the tallest Y)
+        int hotelGridHeight = data.areas.stream()
+                .mapToInt(a -> a.getPos()[1] + a.getDim()[1])
+                .max().orElse(10);
+        this.renderer.setGodzillaController(controller.getGodzillaController(), data.tileSize, data.horizontalOffset, hotelGridHeight);
 
         // Zoek de lobby en spawn schoonmakers
         Area lobbyArea = null;
@@ -86,6 +89,11 @@ public class SimulationPanel extends JPanel {
             protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
                 renderer.render((Graphics2D) g, data);
+
+                // Draw the "HOTEL DESTROYED" overlay once Godzilla is done
+                if (controller.isGodzillaDone()) {
+                    drawHotelDestroyedOverlay((Graphics2D) g, getWidth(), getHeight());
+                }
             }
         };
 
@@ -120,18 +128,47 @@ public class SimulationPanel extends JPanel {
         gameLoop = new GameLoop(controller, hte, () -> {
             if (timeControlPanel != null) timeControlPanel.refresh();
             repaint();
-            // Auto-stop the simulation once Godzilla has finished
+            // Stop everything once Godzilla has finished — do one final repaint first
             if (controller.isGodzillaDone()) {
                 gameLoop.stop();
-                if (logPanel != null) logPanel.addLog("💀 Simulatie gestopt na Godzilla aanval.");
+                SwingUtilities.invokeLater(() -> repaint()); // ensure overlay renders
             }
         });
 
         gameLoop.start();
+    }
 
-        // 2. GEFIXT: SoundManager hier veilig geïnitialiseerd binnen de constructor
-        SoundManager soundManager = new SoundManager();
-        soundManager.playBackgroundMusic("/music/music.wav");
+    private void drawHotelDestroyedOverlay(Graphics2D g2, int panelWidth, int panelHeight) {
+        // Dark semi-transparent full screen cover
+        g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.65f));
+        g2.setColor(new Color(10, 0, 0));
+        g2.fillRect(0, 0, panelWidth, panelHeight);
+        g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f));
+
+        // Box
+        int boxW = 520, boxH = 180;
+        int boxX = (panelWidth - boxW) / 2;
+        int boxY = (panelHeight - boxH) / 2;
+
+        g2.setColor(new Color(30, 0, 0));
+        g2.fillRoundRect(boxX, boxY, boxW, boxH, 24, 24);
+        g2.setColor(new Color(180, 20, 20));
+        g2.setStroke(new BasicStroke(3));
+        g2.drawRoundRect(boxX, boxY, boxW, boxH, 24, 24);
+
+        // Title line
+        g2.setFont(new Font("SansSerif", Font.BOLD, 32));
+        g2.setColor(new Color(255, 60, 60));
+        String line1 = "🦖  HOTEL DESTROYED";
+        FontMetrics fm1 = g2.getFontMetrics();
+        g2.drawString(line1, boxX + (boxW - fm1.stringWidth(line1)) / 2, boxY + 70);
+
+        // Subtitle line
+        g2.setFont(new Font("SansSerif", Font.PLAIN, 18));
+        g2.setColor(new Color(220, 180, 180));
+        String line2 = "ONLY GODZILLA REMAINS";
+        FontMetrics fm2 = g2.getFontMetrics();
+        g2.drawString(line2, boxX + (boxW - fm2.stringWidth(line2)) / 2, boxY + 120);
     }
 
     private boolean isLobbyClicked(int mouseX, int mouseY) {

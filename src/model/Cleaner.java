@@ -4,6 +4,7 @@ import java.util.ArrayList;
 
 public class Cleaner extends Person {
     public CleanerState state = CleanerState.IDLE;
+    public boolean isDead = false;
     public int assignedRoomId = -1;
     public int homeRoomId = -1;
     public int cleaningTimer = 0;

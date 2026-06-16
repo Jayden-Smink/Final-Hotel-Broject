@@ -28,6 +28,7 @@ public class CleanerController {
     public void update() {
         List<Cleaner> active = new ArrayList<>(data.cleaners.values());
         for (Cleaner worker : active) {
+            if (worker.isDead) continue;
             cleanerMover.moveCleaner(worker);
             stateHandler.update(worker);
         }

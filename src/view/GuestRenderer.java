@@ -29,12 +29,17 @@ public class GuestRenderer {
             return;
         }
 
+        int drawX = (int) guest.x + globalOffset;
+        int drawY = (int) guest.y;
+
+        // Draw skull for dead guests — stays permanently at death position
+        if (guest.isDead) {
+            drawSkull(g2, drawX, drawY, "G" + getDisplayId(guest.id));
+            return;
+        }
+
         /*
          * Gast is binnen in kamer/faciliteit — niet tekenen.
-         *
-         * Let op:
-         * Als je wachtende gasten buiten zichtbaar wilt houden, dan moeten ze NIET
-         * currentActivity = "USING_FACILITY" hebben.
          */
         if (guest.state == GuestState.IDLE && !guest.isCheckingOut) {
             return;
@@ -43,9 +48,6 @@ public class GuestRenderer {
         if (guest.state == GuestState.IN_LIFT) {
             return;
         }
-
-        int drawX = (int) guest.x + globalOffset;
-        int drawY = (int) guest.y;
 
         if (guest.isCheckingOut) {
             g2.setColor(Color.RED);
@@ -81,6 +83,30 @@ public class GuestRenderer {
         }
 
         return displayIds.get(realGuestId);
+    }
+
+    /** Draws a skull emoji-style symbol at the given position with a label above it. */
+    public static void drawSkull(Graphics2D g2, int cx, int cy, String label) {
+        // Dark circle background
+        g2.setColor(new Color(40, 40, 40, 200));
+        g2.fillOval(cx - 11, cy - 11, 22, 22);
+
+        // Skull emoji text
+        g2.setFont(new Font("SansSerif", Font.PLAIN, 16));
+        FontMetrics fm = g2.getFontMetrics();
+        String skull = "💀";
+        int sx = cx - fm.stringWidth(skull) / 2;
+        g2.drawString(skull, sx, cy + 6);
+
+        // Label above
+        g2.setFont(new Font("Arial", Font.PLAIN, 10));
+        fm = g2.getFontMetrics();
+        int lx = cx - fm.stringWidth(label) / 2;
+
+        g2.setColor(new Color(0, 0, 0, 160));
+        g2.drawString(label, lx + 1, cy - 14);
+        g2.setColor(new Color(255, 80, 80));
+        g2.drawString(label, lx, cy - 15);
     }
 
     /*

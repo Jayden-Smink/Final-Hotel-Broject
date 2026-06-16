@@ -19,10 +19,16 @@ public class CleanerRenderer {
 
         List<Cleaner> cleaners = cleanerController.getActiveCleaners();
         for (Cleaner cleaner : cleaners) {
-            if (cleaner.state == CleanerState.CLEANING) continue;
-
             int drawX = (int) cleaner.x + horizontalOffset;
             int drawY = (int) cleaner.y;
+
+            // Draw skull for dead cleaners — stays permanently at death position
+            if (cleaner.isDead) {
+                GuestRenderer.drawSkull(g2, drawX, drawY, "C" + cleaner.id);
+                continue;
+            }
+
+            if (cleaner.state == CleanerState.CLEANING) continue;
 
             g2.setColor(new Color(50, 205, 50));
             g2.fillOval(drawX - 10, drawY - 10, 20, 20);

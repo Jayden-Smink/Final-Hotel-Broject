@@ -50,7 +50,7 @@ public class SimulationController implements HotelEventListener {
         // Koppel deze controller aan de EventManager zodat we bericht krijgen als er iets gebeurt.
         this.eventManager = new HotelEventManager();
         this.eventManager.register(this);
-        eventManager.setHte(100);
+//        eventManager.setHte(100);
 
         // Start het simulatiescenario (de vooraf bepaalde lijst met events, bijv. "gast komt aan na 2 seconden").
         System.out.println("Gestart scenario: " + selectedScenario);
@@ -64,10 +64,11 @@ public class SimulationController implements HotelEventListener {
      */
     @Override
     public void notify(HotelEvent event) {
+        // Once Godzilla has destroyed the hotel, ignore all new events
+        if (godzillaController.isFinished()) return;
 
-
-        timer+= 1;
-        System.out.println(timer);
+//        timer+= 1;
+//        System.out.println(timer);
 
         switch (event.getEventType()) {
 
