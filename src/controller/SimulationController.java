@@ -173,6 +173,10 @@ public class SimulationController implements HotelEventListener {
         return godzillaController.isFinished();
     }
 
+    public void triggerEvacuate() {
+        guestActivityController.evacuateAllGuests();
+    }
+
     /**
      * DOORGEEFLUIKEN (Getters):
      * Zorgen dat andere klassen (bijv. de Renderer) bij de sub-controllers

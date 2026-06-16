@@ -197,6 +197,19 @@ public class SimulationPanel extends JPanel {
     public JPanel createBottomPanel() {
         timeControlPanel = new TimeControlPanel(hte, data);
 
+        JButton brandalarmButton = new JButton("🔥 Brandalarm");
+        brandalarmButton.setToolTipText("Activeer evacuatie van alle gasten");
+        brandalarmButton.setBackground(new Color(200, 100, 0));
+        brandalarmButton.setForeground(Color.WHITE);
+        brandalarmButton.setFocusPainted(false);
+        brandalarmButton.setFont(new Font("SansSerif", Font.BOLD, 13));
+        brandalarmButton.addActionListener(e -> {
+            controller.triggerEvacuate();
+            brandalarmButton.setEnabled(false);
+            brandalarmButton.setText("🔥 Evacuatie actief...");
+            if (logPanel != null) logPanel.addLog("🔥 Brandalarm geactiveerd!");
+        });
+
         JButton godzillaButton = new JButton("🦖 Test Godzilla");
         godzillaButton.setToolTipText("Start de Godzilla aanval en stop de simulatie daarna");
         godzillaButton.setBackground(new Color(180, 40, 40));
@@ -210,9 +223,14 @@ public class SimulationPanel extends JPanel {
             if (logPanel != null) logPanel.addLog("🦖 Godzilla test gestart!");
         });
 
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 6, 0));
+        buttonPanel.setOpaque(false);
+        buttonPanel.add(brandalarmButton);
+        buttonPanel.add(godzillaButton);
+
         JPanel bottomPanel = new JPanel(new BorderLayout());
         bottomPanel.add(timeControlPanel, BorderLayout.CENTER);
-        bottomPanel.add(godzillaButton, BorderLayout.EAST);
+        bottomPanel.add(buttonPanel, BorderLayout.EAST);
         return bottomPanel;
     }
 }
