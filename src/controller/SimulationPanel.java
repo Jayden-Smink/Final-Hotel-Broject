@@ -51,11 +51,11 @@ public class SimulationPanel extends JPanel {
         this.data.numberOfCleaners = cleanerCount;
         this.logPanel = new LogPanel();
 
-        // 1. hte en SoundManager eerst aanmaken
+        // hte en SoundManager eerst aanmaken
         this.hte = new HotelTimeEngine();
         SoundManager soundManager = new SoundManager();
 
-        // 2. ✅ GEFIXT: Nu worden alle 5 de vereiste argumenten netjes meegegeven
+        // Bevat alle 5 de vereiste argumenten
         this.controller = new SimulationController(data, logPanel, selectedScenario, hte, soundManager);
 
         this.renderer = new SimulationRenderer(data, controller.getCleanerController());
@@ -140,12 +140,11 @@ public class SimulationPanel extends JPanel {
 
         gameLoop.start();
 
-        // 3. ✅ Start direct de normale sfeermuziek
+        // Start direct de normale sfeermuziek
         soundManager.playBackgroundMusic("/music/music.wav");
     }
 
     private void drawHotelDestroyedOverlay(Graphics2D g2, int panelWidth, int panelHeight) {
-        // ✅ Hersteld naar een zichtbare transparantie (0.65f in plaats van 0.f)
         g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.65f));
         g2.setColor(new Color(10, 0, 0));
         g2.fillRect(0, 0, panelWidth, panelHeight);
@@ -212,7 +211,7 @@ public class SimulationPanel extends JPanel {
         brandalarmButton.setFocusPainted(false);
         brandalarmButton.setFont(new Font("SansSerif", Font.BOLD, 13));
         brandalarmButton.addActionListener(e -> {
-            controller.triggerEvacuate();
+            controller.triggerEvacuate(); // Dit triggert nu ook de muziekwissel via de controller!
             brandalarmButton.setEnabled(false);
             brandalarmButton.setText("🔥 Evacuatie actief...");
             if (logPanel != null) logPanel.addLog("🔥 Brandalarm geactiveerd!");

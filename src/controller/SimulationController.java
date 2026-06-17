@@ -5,7 +5,7 @@ import hotelevents.HotelEventListener;
 import hotelevents.HotelEventManager;
 import model.*;
 import view.LogPanel;
-import util.SoundManager; // ✅ Toegevoegd: Juiste import voor de SoundManager
+import util.SoundManager; // Netjes geïmporteerd voor de SoundManager
 
 /**
  * DE HOOFD-CONTROLLER (Verkeersregelaar):
@@ -32,16 +32,17 @@ public class SimulationController implements HotelEventListener {
     // DE COMMUNICATIEMIDDELEN:
     private final LogPanel logPanel;              // Tekstvak op het scherm voor meldingen.
     private final HotelEventManager eventManager; // Motor die hotel-events genereert.
+    private final SoundManager soundManager;      // Centraal opgeslagen voor brandalarm-muziek
 
     /**
      * DE OPSTART-FASERING (Constructor):
      * Maakt alle sub-controllers aan, verbindt ze, en start het gekozen scenario.
      */
-    // ✅ GEFIXT: SoundManager toegevoegd als 5de parameter aan de constructor
     public SimulationController(SimulationData data, LogPanel logPanel, int selectedScenario, HotelTimeEngine hte, SoundManager soundManager) {
         this.data = data;
         this.logPanel = logPanel;
         this.hte = hte;
+        this.soundManager = soundManager; // Sla de manager op
 
         // Iedere sub-controller krijgt toegang tot de data en het logpaneel.
         this.elevatorController = new ElevatorController(data, logPanel);
@@ -50,7 +51,7 @@ public class SimulationController implements HotelEventListener {
         this.guestActivityController = new GuestActivityController(data, receptionistController, logPanel);
         this.cleanerController = new CleanerController(data, logPanel);
 
-        // ✅ GEFIXT: soundManager kan nu zonder fouten worden doorgegeven!
+        // De soundManager wordt doorgegeven aan de GodzillaController!
         this.godzillaController = new GodzillaController(data, logPanel, new model.FireDestruction(3), soundManager);
 
         // Koppel deze controller aan de EventManager en stel het HTE-interval in.
@@ -125,10 +126,9 @@ public class SimulationController implements HotelEventListener {
                 if (logPanel != null) logPanel.addLog("🧹 Cleaning emergency in kamer " + roomId + "!");
                 break;
 
-            // EVACUATIE: Alle gasten verlaten het hotel.
+            // EVACUATIE VIA EVENT ENGINE:
             case EVACUATE:
-                guestActivityController.evacuateAllGuests();
-                cleanerController.evacuateAllCleaners();
+                triggerEvacuate(); // Gebruikt nu de centrale methode inclusief muziekwissel
                 if (logPanel != null) logPanel.addLog("🚨 EVACUATIE! Alle gasten verlaten het hotel.");
                 break;
 
@@ -178,9 +178,16 @@ public class SimulationController implements HotelEventListener {
         return godzillaController.isFinished();
     }
 
+    /** Activeer brandevacuatie en start de alarmmuziek. */
     public void triggerEvacuate() {
         guestActivityController.evacuateAllGuests();
         cleanerController.evacuateAllCleaners();
+
+        // ✅ GEFIXT: Wissel direct naar de alarmmuziek!
+        if (soundManager != null) {
+            soundManager.stopMusic();
+            soundManager.playBackgroundMusic("/music/evacuate.wav");
+        }
     }
 
     /**
