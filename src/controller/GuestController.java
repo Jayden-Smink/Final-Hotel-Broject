@@ -46,7 +46,7 @@ public class GuestController {
         for (int i = 0; i < guestList.size(); i++) {
             Guest guest = guestList.get(i);
             if (guest == null) continue;
-            if (guest.isDead) continue;
+            if (guest.state == GuestState.DEAD) continue;
             if (guest.state == GuestState.EXITING_LIFT) guest.state = GuestState.WALKING;
             guestMover.moveGuest(guest);
         }

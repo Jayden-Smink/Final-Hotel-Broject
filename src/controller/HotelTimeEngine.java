@@ -4,7 +4,7 @@ public class HotelTimeEngine {
 
     private boolean paused = false;
     private int speed = 1;
-    private int hteInterval = 200; // milliseconden tussen events (lager = sneller)
+    private int hteInterval = 2000; // milliseconden tussen events (lager = sneller)
 
     public void togglePause() { paused = !paused; }
     public boolean isPaused() { return paused; }

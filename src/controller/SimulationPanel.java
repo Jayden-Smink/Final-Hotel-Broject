@@ -138,7 +138,7 @@ public class SimulationPanel extends JPanel {
     }
 
     private void drawHotelDestroyedOverlay(Graphics2D g2, int panelWidth, int panelHeight) {
-        g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.65f));
+        g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.f));
         g2.setColor(new Color(10, 0, 0));
         g2.fillRect(0, 0, panelWidth, panelHeight);
         g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f));

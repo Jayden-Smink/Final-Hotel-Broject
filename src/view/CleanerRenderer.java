@@ -5,13 +5,16 @@ import model.Cleaner;
 import model.CleanerState;
 import model.SimulationData;
 import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.util.List;
 
 public class CleanerRenderer {
     private final CleanerController cleanerController;
+    private final AssetLoader assetLoader;
 
-    public CleanerRenderer(CleanerController cleanerController) {
+    public CleanerRenderer(CleanerController cleanerController, AssetLoader assetLoader) {
         this.cleanerController = cleanerController;
+        this.assetLoader = assetLoader;
     }
 
     public void drawCleaners(Graphics2D g2, int horizontalOffset) {
@@ -22,9 +25,10 @@ public class CleanerRenderer {
             int drawX = (int) cleaner.x + horizontalOffset;
             int drawY = (int) cleaner.y;
 
-            // Draw skull for dead cleaners — stays permanently at death position
+            // Draw dead-cleaner image — stays permanently at death position
             if (cleaner.isDead) {
-                GuestRenderer.drawSkull(g2, drawX, drawY, "C" + cleaner.id);
+                BufferedImage deadImg = assetLoader != null ? assetLoader.get("DEAD-CLEANER") : null;
+                GuestRenderer.drawDeadPerson(g2, drawX, drawY, "C" + cleaner.id, deadImg);
                 continue;
             }
 

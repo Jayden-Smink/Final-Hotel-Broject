@@ -37,72 +37,72 @@ public class GodzillaRenderer {
     public void render(Graphics2D g2, SimulationData data, GodzillaModel godzilla) {
         if (godzilla == null || !godzilla.isActive) return;
 
-        drawDestroyedAreas(g2, data);
-        drawFireAreas(g2, data);
-        drawDeadGuests(g2, data);
+//        drawDestroyedAreas(g2, data);
+//        drawFireAreas(g2, data);
+//        drawDeadGuests(g2, data);
         drawGodzilla(g2, godzilla);
     }
 
-    private void drawDestroyedAreas(Graphics2D g2, SimulationData data) {
-        for (Area a : data.areas) {
-            if (!a.isDestroyed) continue;
-
-            int x = (a.getPos()[0] * tileSize) + horizontalOffset;
-            int y = a.getPos()[1] * tileSize;
-            int w = a.getDim()[0] * tileSize;
-            int h = a.getDim()[1] * tileSize;
-
-            Composite original = g2.getComposite();
-            g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.85f));
-            g2.setColor(new Color(20, 20, 20));
-            g2.fillRect(x, y, w, h);
-            g2.setComposite(original);
-
-            g2.setColor(new Color(150, 0, 0));
-            g2.setStroke(new BasicStroke(3));
-            g2.drawLine(x, y, x + w, y + h);
-            g2.drawLine(x + w, y, x, y + h);
-        }
-    }
-
-    private void drawFireAreas(Graphics2D g2, SimulationData data) {
-        for (Area a : data.areas) {
-            if (!a.isOnFire) continue;
-
-            int x = (a.getPos()[0] * tileSize) + horizontalOffset;
-            int y = a.getPos()[1] * tileSize;
-            int w = a.getDim()[0] * tileSize;
-            int h = a.getDim()[1] * tileSize;
-
-            Composite original = g2.getComposite();
-            g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.6f));
-            g2.setColor(new Color(255, 80, 0));
-            g2.fillRect(x, y, w, h);
-            g2.setComposite(original);
-
-            g2.setFont(new Font("Arial", Font.BOLD, 20));
-            g2.setColor(Color.YELLOW);
-            g2.drawString("🔥", x + w / 2 - 10, y + h / 2);
-        }
-    }
-
-    private void drawDeadGuests(Graphics2D g2, SimulationData data) {
-        for (Guest g : data.guests.values()) {
-            if (!g.isDead) continue;
-
-            int drawX = (int) g.x + horizontalOffset;
-            int drawY = (int) g.y;
-
-            g2.setColor(Color.RED);
-            g2.setStroke(new BasicStroke(2));
-            g2.drawLine(drawX - 10, drawY - 10, drawX + 10, drawY + 10);
-            g2.drawLine(drawX + 10, drawY - 10, drawX - 10, drawY + 10);
-
-            g2.setFont(new Font("Arial", Font.PLAIN, 10));
-            g2.setColor(Color.RED);
-            g2.drawString("💀" + g.id, drawX - 8, drawY - 12);
-        }
-    }
+//    private void drawDestroyedAreas(Graphics2D g2, SimulationData data) {
+//        for (Area a : data.areas) {
+//            if (!a.isDestroyed) continue;
+//
+//            int x = (a.getPos()[0] * tileSize) + horizontalOffset;
+//            int y = a.getPos()[1] * tileSize;
+//            int w = a.getDim()[0] * tileSize;
+//            int h = a.getDim()[1] * tileSize;
+//
+//            Composite original = g2.getComposite();
+//            g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.85f));
+//            g2.setColor(new Color(20, 20, 20));
+//            g2.fillRect(x, y, w, h);
+//            g2.setComposite(original);
+//
+//            g2.setColor(new Color(150, 0, 0));
+//            g2.setStroke(new BasicStroke(3));
+//            g2.drawLine(x, y, x + w, y + h);
+//            g2.drawLine(x + w, y, x, y + h);
+//        }
+//    }
+//
+//    private void drawFireAreas(Graphics2D g2, SimulationData data) {
+//        for (Area a : data.areas) {
+//            if (!a.isOnFire) continue;
+//
+//            int x = (a.getPos()[0] * tileSize) + horizontalOffset;
+//            int y = a.getPos()[1] * tileSize;
+//            int w = a.getDim()[0] * tileSize;
+//            int h = a.getDim()[1] * tileSize;
+//
+//            Composite original = g2.getComposite();
+//            g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.6f));
+//            g2.setColor(new Color(255, 80, 0));
+//            g2.fillRect(x, y, w, h);
+//            g2.setComposite(original);
+//
+//            g2.setFont(new Font("Arial", Font.BOLD, 20));
+//            g2.setColor(Color.YELLOW);
+//            g2.drawString("🔥", x + w / 2 - 10, y + h / 2);
+//        }
+//    }
+//
+//    private void drawDeadGuests(Graphics2D g2, SimulationData data) {
+//        for (Guest g : data.guests.values()) {
+//            if (!g.isDead) continue;
+//
+//            int drawX = (int) g.x + horizontalOffset;
+//            int drawY = (int) g.y;
+//
+//            g2.setColor(Color.RED);
+//            g2.setStroke(new BasicStroke(2));
+//            g2.drawLine(drawX - 10, drawY - 10, drawX + 10, drawY + 10);
+//            g2.drawLine(drawX + 10, drawY - 10, drawX - 10, drawY + 10);
+//
+//            g2.setFont(new Font("Arial", Font.PLAIN, 10));
+//            g2.setColor(Color.RED);
+//            g2.drawString("💀" + g.id, drawX - 8, drawY - 12);
+//        }
+//    }
 
     private void drawGodzilla(Graphics2D g2, GodzillaModel godzilla) {
         // Godzilla width = 2 tiles, height = full hotel height

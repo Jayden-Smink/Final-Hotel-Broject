@@ -20,7 +20,7 @@ public class SimulationRenderer {
         this.assetLoader = new AssetLoader();
         this.areaRenderer = new AreaRenderer(assetLoader, cleanerController);
         this.elevatorRenderer = new ElevatorRenderer(assetLoader);
-        this.cleanerRenderer = new CleanerRenderer(cleanerController);
+        this.cleanerRenderer = new CleanerRenderer(cleanerController, assetLoader);
     }
 
     public void setGodzillaController(controller.GodzillaController gc, int tileSize, int horizontalOffset, int hotelGridHeight) {
@@ -55,8 +55,8 @@ public class SimulationRenderer {
         }
 
         for (Guest guest : guestSnapshot) {
-            if (guest.isDead || guest.state != GuestState.IN_LIFT) {
-                GuestRenderer.draw(g2, guest, data.horizontalOffset);
+            if (guest.state == GuestState.DEAD || guest.state != GuestState.IN_LIFT) {
+                GuestRenderer.draw(g2, guest, data.horizontalOffset, assetLoader);
             }
         }
     }

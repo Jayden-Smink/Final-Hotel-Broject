@@ -17,13 +17,11 @@ public class GodzillaController {
         this.logPanel = logPanel;
         this.strategy = strategy;
 
-        // Find max column from layout
         this.maxColumn = data.areas.stream()
                 .mapToInt(a -> a.getPos()[0] + a.getDim()[0])
                 .max()
                 .orElse(10);
 
-        // Godzilla starts left of the hotel
         this.godzilla = new GodzillaModel(0, 0, 0.8);
     }
 
@@ -37,7 +35,6 @@ public class GodzillaController {
         if (logPanel != null) logPanel.addLog("🦖 GODZILLA ATTACK! Run!");
     }
 
-    /** True only after Godzilla has fully walked through the hotel. */
     public boolean isFinished() {
         return finished;
     }
@@ -45,24 +42,19 @@ public class GodzillaController {
     public void update() {
         if (!godzilla.isActive || finished) return;
 
-        // Update fire timers for all burning areas (3-second burn before collapse)
         for (Area a : data.areas) {
             if (a.isOnFire) fireUpdater.update(a);
         }
 
-        // Move godzilla
         godzilla.moveRight();
 
-        // Destroy the column the instant Godzilla's foot reaches it
         if (godzilla.hasReachedNextColumn(data.tileSize, data.horizontalOffset)) {
             destroyColumn(godzilla.currentColumn);
             godzilla.nextColumn();
         }
 
-        // Handle guests in destroyed areas
         handleGuestsInDestroyedAreas();
 
-        // Check if done
         if (godzilla.isDone(maxColumn)) {
             godzilla.isActive = false;
             finished = true;
@@ -75,7 +67,6 @@ public class GodzillaController {
     private void destroyColumn(int column) {
         for (Area a : data.areas) {
             if (a.getPos()[0] == column && !a.isDestroyed) {
-                // 30% chance of fire, 70% instant destruction
                 if (rng.nextInt(100) < 30) {
                     new model.FireDestruction(3).destroy(a);
                     if (logPanel != null) logPanel.addLog("🔥 " + a.AreaType + " staat in brand!");
@@ -83,9 +74,8 @@ public class GodzillaController {
                     new model.InstantDestruction().destroy(a);
                 }
 
-                // Special cases for elevator and stairs
                 if (a.AreaType.equalsIgnoreCase("LIFTSCHACHT")) {
-                    data.elevator = null; // elevator destroyed!
+                    data.elevator = null;
                     if (logPanel != null) logPanel.addLog("💥 Liftschacht vernietigd!");
                 }
                 if (a.AreaType.equalsIgnoreCase("TRAP")) {
@@ -99,26 +89,45 @@ public class GodzillaController {
         for (Guest g : data.guests.values()) {
             if (g.isDead) continue;
 
-            // Check if guest is in a destroyed area
             for (Area a : data.areas) {
                 if (a.isDestroyed && isGuestInArea(g, a)) {
                     killGuest(g);
                     break;
                 }
             }
+            if (g.isDead) continue;
 
-            // If guest's target is destroyed → flee to lobby
+            if (g.state == model.GuestState.IDLE) {
+                for (Area a : data.areas) {
+                    if (a.isDestroyed && (a.id == g.assignedRoomId || a.currentOccupants.contains(g.id))) {
+                        g.x = (a.getPos()[0] * data.tileSize) + (a.getDim()[0] * data.tileSize) / 2.0;
+                        g.y = (a.getPos()[1] * data.tileSize) + (a.getDim()[1] * data.tileSize) / 2.0;
+                        killGuest(g);
+                        break;
+                    }
+                }
+            }
+
+            if (!g.isDead && g.state == model.GuestState.IDLE) {
+                for (Area a : data.areas) {
+                    if (a.isDestroyed && isPersonInArea(g.x, g.y, a)) {
+                        killGuest(g);
+                        break;
+                    }
+                }
+            }
+
+            if (g.isDead) continue;
+
             if (isTargetDestroyed(g)) {
                 fleeToLobby(g);
             }
 
-            // If guest is on destroyed stairs → fall to death
             if (isOnDestroyedStairs(g)) {
                 killGuest(g);
             }
         }
 
-        // Also handle cleaners in destroyed areas
         for (model.Cleaner c : data.cleaners.values()) {
             if (c.isDead) continue;
             for (Area a : data.areas) {
@@ -132,6 +141,7 @@ public class GodzillaController {
 
     private void killGuest(Guest g) {
         g.isDead = true;
+        g.state = model.GuestState.DEAD;
         if (logPanel != null) logPanel.addLog("💀 Gast " + g.id + " heeft het niet overleefd.");
     }
 
@@ -164,7 +174,6 @@ public class GodzillaController {
         int areaY = a.getPos()[1] * data.tileSize;
         int areaW = a.getDim()[0] * data.tileSize;
         int areaH = a.getDim()[1] * data.tileSize;
-
         return g.x >= areaX && g.x <= areaX + areaW &&
                 g.y >= areaY && g.y <= areaY + areaH;
     }

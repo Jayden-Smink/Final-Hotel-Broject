@@ -43,7 +43,15 @@ public class AreaRenderer {
         if (assetKey.contains("SCHACHT")) assetKey = "ELEVATOR-SHAFT";
         if (assetKey.contains("TRAP")) assetKey = "STAIRS";
 
-        BufferedImage img = assetLoader.get(assetKey);
+        // Pick image based on destruction state
+        BufferedImage img;
+        if (area.isDestroyed) {
+            img = assetLoader.getDestroyed(assetKey);
+        } else if (area.isOnFire) {
+            img = assetLoader.getBurning(assetKey);
+        } else {
+            img = assetLoader.get(assetKey);
+        }
 
         if (FRONT_LAYER_AREAS.contains(area.AreaType.toUpperCase())) {
             g2.setColor(new Color(30, 30, 30));
@@ -57,6 +65,11 @@ public class AreaRenderer {
             else if (assetKey.equals("LOBBY")) g2.setColor(new Color(45, 45, 45));
             else g2.setColor(Color.DARK_GRAY);
             g2.fillRect(x, y, w, h);
+        }
+
+        // Skip overlays and labels for destroyed/burning areas — the image says it all
+        if (area.isDestroyed || area.isOnFire) {
+            return;
         }
 
         // Red overlay for occupied areas

@@ -35,7 +35,7 @@ public class GuestLocationHandler {
             Guest guest = guestList.get(i);
 
             // Dode gast: kamer vrijmaken en verwijderen
-            if (guest.isDead) {
+            if (guest.state == GuestState.DEAD) {
                 freeRoomAndAssignCleaner(guest);
                 continue;
             }
@@ -87,6 +87,7 @@ public class GuestLocationHandler {
         int roomId = guest.assignedRoomId;
 
         roomController.maakGastVrij(data, guest.id);
+        if (guest.isDead) return;
         data.guests.remove(guest.id);
 
         if (roomId != -1 && !data.cleaners.isEmpty()) {
