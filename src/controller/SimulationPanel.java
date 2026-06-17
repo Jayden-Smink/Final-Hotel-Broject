@@ -14,6 +14,7 @@ import model.*;
 import view.SimulationRenderer;
 import factory.PersonFactory;
 import model.PersonType;
+import util.SoundManager; // Netjes geïmporteerd
 
 public class SimulationPanel extends JPanel {
 
@@ -135,6 +136,9 @@ public class SimulationPanel extends JPanel {
         });
 
         gameLoop.start();
+
+        SoundManager soundManager = new SoundManager();
+        soundManager.playBackgroundMusic("/music/music.wav");
     }
 
     private void drawHotelDestroyedOverlay(Graphics2D g2, int panelWidth, int panelHeight) {
