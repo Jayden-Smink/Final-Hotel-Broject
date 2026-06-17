@@ -51,9 +51,12 @@ public class SimulationPanel extends JPanel {
         this.data.numberOfCleaners = cleanerCount;
         this.logPanel = new LogPanel();
 
-        // hte eerst aanmaken zodat de controller het kan ontvangen
+        // 1. hte en SoundManager eerst aanmaken
         this.hte = new HotelTimeEngine();
-        this.controller = new SimulationController(data, logPanel, selectedScenario, hte);
+        SoundManager soundManager = new SoundManager();
+
+        // 2. ✅ GEFIXT: Nu worden alle 5 de vereiste argumenten netjes meegegeven
+        this.controller = new SimulationController(data, logPanel, selectedScenario, hte, soundManager);
 
         this.renderer = new SimulationRenderer(data, controller.getCleanerController());
 
@@ -137,12 +140,13 @@ public class SimulationPanel extends JPanel {
 
         gameLoop.start();
 
-        SoundManager soundManager = new SoundManager();
+        // 3. ✅ Start direct de normale sfeermuziek
         soundManager.playBackgroundMusic("/music/music.wav");
     }
 
     private void drawHotelDestroyedOverlay(Graphics2D g2, int panelWidth, int panelHeight) {
-        g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.f));
+        // ✅ Hersteld naar een zichtbare transparantie (0.65f in plaats van 0.f)
+        g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.65f));
         g2.setColor(new Color(10, 0, 0));
         g2.fillRect(0, 0, panelWidth, panelHeight);
         g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f));

@@ -5,6 +5,7 @@ import hotelevents.HotelEventListener;
 import hotelevents.HotelEventManager;
 import model.*;
 import view.LogPanel;
+import util.SoundManager; // ✅ Toegevoegd: Juiste import voor de SoundManager
 
 /**
  * DE HOOFD-CONTROLLER (Verkeersregelaar):
@@ -36,7 +37,8 @@ public class SimulationController implements HotelEventListener {
      * DE OPSTART-FASERING (Constructor):
      * Maakt alle sub-controllers aan, verbindt ze, en start het gekozen scenario.
      */
-    public SimulationController(SimulationData data, LogPanel logPanel, int selectedScenario, HotelTimeEngine hte) {
+    // ✅ GEFIXT: SoundManager toegevoegd als 5de parameter aan de constructor
+    public SimulationController(SimulationData data, LogPanel logPanel, int selectedScenario, HotelTimeEngine hte, SoundManager soundManager) {
         this.data = data;
         this.logPanel = logPanel;
         this.hte = hte;
@@ -47,7 +49,9 @@ public class SimulationController implements HotelEventListener {
         this.guestController = new GuestController(data, logPanel, this.receptionistController);
         this.guestActivityController = new GuestActivityController(data, receptionistController, logPanel);
         this.cleanerController = new CleanerController(data, logPanel);
-        this.godzillaController = new GodzillaController(data, logPanel, new model.FireDestruction(3));
+
+        // ✅ GEFIXT: soundManager kan nu zonder fouten worden doorgegeven!
+        this.godzillaController = new GodzillaController(data, logPanel, new model.FireDestruction(3), soundManager);
 
         // Koppel deze controller aan de EventManager en stel het HTE-interval in.
         this.eventManager = new HotelEventManager();

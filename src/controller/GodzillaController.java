@@ -2,6 +2,7 @@ package controller;
 
 import model.*;
 import view.LogPanel;
+import util.SoundManager; // Geïmporteerd voor de muziek-wissel
 import java.util.List;
 
 public class GodzillaController {
@@ -10,12 +11,17 @@ public class GodzillaController {
     private final IDestructionStrategy strategy;
     private final model.FireDestruction fireUpdater = new model.FireDestruction(3);
     private final GodzillaModel godzilla;
+    private final SoundManager soundManager; // Opgeslagen om de muziek aan te sturen
     private int maxColumn;
 
-    public GodzillaController(SimulationData data, LogPanel logPanel, IDestructionStrategy strategy) {
+    private boolean hasStarted = false;
+    private boolean finished = false;
+
+    public GodzillaController(SimulationData data, LogPanel logPanel, IDestructionStrategy strategy, SoundManager soundManager) {
         this.data = data;
         this.logPanel = logPanel;
         this.strategy = strategy;
+        this.soundManager = soundManager; // Hier netjes opgevangen
 
         this.maxColumn = data.areas.stream()
                 .mapToInt(a -> a.getPos()[0] + a.getDim()[0])
@@ -25,14 +31,17 @@ public class GodzillaController {
         this.godzilla = new GodzillaModel(0, 0, 0.8);
     }
 
-    private boolean hasStarted = false;
-    private boolean finished = false;
-
     public void activate() {
         godzilla.isActive = true;
         hasStarted = true;
         finished = false;
         if (logPanel != null) logPanel.addLog("🦖 GODZILLA ATTACK! Run!");
+
+        // ✅ GEFIXT: Schakel de audio direct over naar Godzilla muziek!
+        if (soundManager != null) {
+            soundManager.stopMusic();
+            soundManager.playBackgroundMusic("/music/godzilla.wav");
+        }
     }
 
     public boolean isFinished() {
