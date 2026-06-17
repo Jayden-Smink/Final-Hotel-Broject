@@ -75,7 +75,7 @@ public class ElevatorController {
             // Timeout bereikt: gast geeft op en sterft in de wachtrij
             if (waitingGuest.elevatorWaitTimer >= data.guestSettings.getElevatorWaitTimeout()) {
                 elevator.waitingGuests.remove(i);
-                data.guests.remove(waitingGuest.id);
+                waitingGuest.state = GuestState.FALLING;
 
                 if (logPanel != null) logPanel.addLog("💀 Gast " + waitingGuest.id + " is gestorven in de liftwachtrij.");
             }

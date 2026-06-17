@@ -8,6 +8,7 @@ public enum GuestState {
     IN_QUEUE,           // In de rij voor de lift (mover laat ze hier met rust)
     IN_LIFT,            // In de lift
     EXITING_LIFT,       // Uitstappen uit de lift (mover pakt ze hier weer op)
-    AT_DESTINATION,      // Bestemming bereikt
-    DEAD
+    AT_DESTINATION,     // Bestemming bereikt
+    DEAD,               // Dood bij Godzilla event
+    FALLING             // gast valt uit de layout bij te lang wachten
 }

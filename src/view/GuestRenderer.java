@@ -31,6 +31,12 @@ public class GuestRenderer {
                     assetLoader != null ? assetLoader.get("DEAD-GUEST") : null);
             return;
         }
+        // Falling guest — also draws skull but moving down
+        if (guest.state == GuestState.FALLING) {
+            drawDeadPerson(g2, drawX, drawY, "G" + getDisplayId(guest.id),
+                    assetLoader != null ? assetLoader.get("DEAD-GUEST") : null);
+            return;
+        }
 
         // Not visible while idle inside a room/facility
         if (guest.state == GuestState.IDLE && !guest.isCheckingOut) return;

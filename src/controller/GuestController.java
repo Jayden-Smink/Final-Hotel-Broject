@@ -47,6 +47,12 @@ public class GuestController {
             Guest guest = guestList.get(i);
             if (guest == null) continue;
             if (guest.state == GuestState.DEAD) continue;
+            // Falling guest — move straight down, remove when off screen
+            if (guest.state == GuestState.FALLING) {
+                guest.y += 5;
+                if (guest.y > 2000) data.guests.remove(guest.id);
+                continue;
+            }
             if (guest.state == GuestState.EXITING_LIFT) guest.state = GuestState.WALKING;
             guestMover.moveGuest(guest);
         }
