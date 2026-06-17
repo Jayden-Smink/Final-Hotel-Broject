@@ -37,7 +37,7 @@ public class GodzillaController {
         finished = false;
         if (logPanel != null) logPanel.addLog("🦖 GODZILLA ATTACK! Run!");
 
-        // ✅ GEFIXT: Schakel de audio direct over naar Godzilla muziek!
+        // ✅ Schakel de audio direct over naar Godzilla muziek!
         if (soundManager != null) {
             soundManager.stopMusic();
             soundManager.playBackgroundMusic("/music/godzilla.wav");
@@ -67,7 +67,8 @@ public class GodzillaController {
         if (godzilla.isDone(maxColumn)) {
             godzilla.isActive = false;
             finished = true;
-            if (logPanel != null) logPanel.addLog("🦖 Godzilla heeft het hotel verwoest!");
+            // ✅ Geüpdatet met een swingende logmelding!
+            if (logPanel != null) logPanel.addLog("💃 Godzilla heeft al dansend het hotel verwoest! 🦖");
         }
     }
 

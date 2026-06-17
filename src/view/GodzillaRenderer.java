@@ -45,9 +45,13 @@ public class GodzillaRenderer {
         int gWidth  = tileSize * 2;
         int gHeight = hotelHeightPx;
 
-        // Feet land exactly at the bottom of the lobby row
+        // Basis posities
         int drawY = lobbyBottomPx - gHeight;
         int drawX = (int) godzilla.x + horizontalOffset - gWidth / 2;
+
+        // ✅ GEFIXT: Voeg de dans-offsets toe aan de uiteindelijke render-coördinaten!
+        drawX += godzilla.getDanceOffsetX();
+        drawY += godzilla.getDanceOffsetY();
 
         if (godzillaImg != null) {
             g2.drawImage(godzillaImg, drawX, drawY, gWidth, gHeight, null);
