@@ -14,7 +14,7 @@ import model.*;
 import view.SimulationRenderer;
 import factory.PersonFactory;
 import model.PersonType;
-import util.SoundManager; // Netjes geïmporteerd
+import util.SoundManager;
 
 public class SimulationPanel extends JPanel {
 
